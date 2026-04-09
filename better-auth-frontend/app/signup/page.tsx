@@ -1,31 +1,39 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { toast } from "sonner";
 import { authClient } from "../../lib/auth-client";
+import { getResultErrorMessage, unknownToMessage } from "../../lib/auth-feedback";
 
 export default function SignupPage() {
+  const router = useRouter();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
 
   const handleSignup = async () => {
     setIsLoading(true);
-    setError(null);
-    setSuccess(null);
 
     try {
-      await authClient.signUp.email({
+      const result: unknown = await authClient.signUp.email({
         name,
         email,
         password,
       });
-      setSuccess("Account created. You can now log in.");
+
+      const resultError = getResultErrorMessage(result, "Signup failed");
+      if (resultError) {
+        toast.error(resultError);
+        return;
+      }
+
+      toast.success("Account created. Please log in.");
+      router.replace("/login");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Signup failed");
+      toast.error(unknownToMessage(e, "Signup failed"));
     } finally {
       setIsLoading(false);
     }
@@ -77,15 +85,6 @@ export default function SignupPage() {
               placeholder="••••••••"
             />
           </label>
-
-          {error ? (
-            <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-          ) : null}
-          {success ? (
-            <p className="text-sm text-emerald-700 dark:text-emerald-400">
-              {success}
-            </p>
-          ) : null}
 
           <button
             className="inline-flex h-11 w-full items-center justify-center rounded-xl bg-black px-4 text-sm font-medium text-white hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-white dark:text-black dark:hover:bg-zinc-200"

@@ -3,30 +3,38 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { toast } from "sonner";
 import { authClient } from "../../lib/auth-client";
+import { getResultErrorMessage, unknownToMessage } from "../../lib/auth-feedback";
 
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
 
   const handleLogin = async () => {
     setIsLoading(true);
-    setError(null);
-    setSuccess(null);
 
     try {
-      await authClient.signIn.email({
+      const result: unknown = await authClient.signIn.email({
         email,
         password,
       });
-      setSuccess("Logged in.");
+
+      const resultError = getResultErrorMessage(
+        result,
+        "Invalid email or password",
+      );
+      if (resultError) {
+        toast.error(resultError);
+        return;
+      }
+
+      toast.success("Logged in.");
       router.replace("/dashboard");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Login failed");
+      toast.error(unknownToMessage(e, "Login failed"));
     } finally {
       setIsLoading(false);
     }
@@ -66,15 +74,6 @@ export default function LoginPage() {
               placeholder="••••••••"
             />
           </label>
-
-          {error ? (
-            <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-          ) : null}
-          {success ? (
-            <p className="text-sm text-emerald-700 dark:text-emerald-400">
-              {success}
-            </p>
-          ) : null}
 
           <button
             className="inline-flex h-11 w-full items-center justify-center rounded-xl bg-black px-4 text-sm font-medium text-white hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-white dark:text-black dark:hover:bg-zinc-200"
