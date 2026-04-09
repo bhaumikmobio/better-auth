@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Toaster } from "sonner";
+import { APP_COPY } from "@/constants/messages";
 
 export const metadata: Metadata = {
-  title: "Better Auth Demo",
+  title: APP_COPY.appTitle,
 };
 
 export default function RootLayout({
