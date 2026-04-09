@@ -1,7 +1,7 @@
-import { betterAuth } from 'better-auth';
 import { prismaAdapter } from '@better-auth/prisma-adapter';
 import { PrismaPg } from '@prisma/adapter-pg';
-import { PrismaClient } from '../generated/prisma/client';
+import { betterAuth } from 'better-auth';
+import { PrismaClient } from '../../generated/prisma/client';
 
 const connectionString = process.env['DATABASE_URL'];
 if (!connectionString) {

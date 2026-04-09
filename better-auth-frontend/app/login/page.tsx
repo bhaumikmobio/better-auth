@@ -4,8 +4,11 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
-import { authClient } from "../../lib/auth-client";
-import { getResultErrorMessage, unknownToMessage } from "../../lib/auth-feedback";
+import { CenteredCard } from "@/components/layout/CenteredCard";
+import { Button } from "@/components/ui/Button";
+import { ROUTES } from "@/constants/routes";
+import { authClient } from "@/lib/auth-client";
+import { getResultErrorMessage, unknownToMessage } from "@/common/auth-feedback";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -32,7 +35,7 @@ export default function LoginPage() {
       }
 
       toast.success("Logged in.");
-      router.replace("/dashboard");
+      router.replace(ROUTES.dashboard);
     } catch (e) {
       toast.error(unknownToMessage(e, "Login failed"));
     } finally {
@@ -41,15 +44,18 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex flex-1 items-center justify-center bg-zinc-50 px-6 dark:bg-black">
-      <div className="w-full max-w-md rounded-2xl border border-black/5 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-zinc-950">
-        <div className="mb-6">
-          <h1 className="text-2xl font-semibold tracking-tight">Log in</h1>
-          <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-            Use your email and password.
-          </p>
+    <CenteredCard
+      title="Log in"
+      description="Use your email and password."
+      footer={
+        <div className="text-sm text-zinc-600 dark:text-zinc-400">
+          Don’t have an account?{" "}
+          <Link className="font-medium text-black dark:text-white" href={ROUTES.signup}>
+            Sign up
+          </Link>
         </div>
-
+      }
+    >
         <div className="space-y-4">
           <label className="block text-sm font-medium">
             Email
@@ -75,24 +81,16 @@ export default function LoginPage() {
             />
           </label>
 
-          <button
-            className="inline-flex h-11 w-full items-center justify-center rounded-xl bg-black px-4 text-sm font-medium text-white hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-white dark:text-black dark:hover:bg-zinc-200"
+          <Button
             onClick={handleLogin}
-            disabled={isLoading || !email || !password}
-            type="button"
+            disabled={!email || !password}
+            isLoading={isLoading}
+            fullWidth
           >
             {isLoading ? "Logging in..." : "Log in"}
-          </button>
+          </Button>
         </div>
-
-        <div className="mt-6 text-sm text-zinc-600 dark:text-zinc-400">
-          Don’t have an account?{" "}
-          <Link className="font-medium text-black dark:text-white" href="/signup">
-            Sign up
-          </Link>
-        </div>
-      </div>
-    </div>
+    </CenteredCard>
   );
 }
 
