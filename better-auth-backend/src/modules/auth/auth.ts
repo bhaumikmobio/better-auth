@@ -54,5 +54,17 @@ export const auth = betterAuth({
   },
   emailAndPassword: {
     enabled: true,
+    sendResetPassword: ({ user, url }) => {
+      // Email sending is intentionally not implemented yet.
+      // This log confirms reset flow and provides the URL in development.
+      console.info(
+        `Password reset requested for ${user.email}. Reset URL: ${url}`,
+      );
+      return Promise.resolve();
+    },
+    onPasswordReset: ({ user }) => {
+      console.info(`Password reset completed for ${user.email}`);
+      return Promise.resolve();
+    },
   },
 });

@@ -49,11 +49,18 @@ export default function LoginPage() {
       title={LOGIN_COPY.title}
       description={LOGIN_COPY.description}
       footer={
-        <div className="text-sm text-zinc-600 dark:text-zinc-400">
-          {LOGIN_COPY.noAccountPrefix}{" "}
-          <Link className="font-medium text-black dark:text-white" href={ROUTES.signup}>
-            {LOGIN_COPY.noAccountLink}
-          </Link>
+        <div className="text-sm text-zinc-600 dark:text-zinc-400 space-y-2">
+          <div>
+            {LOGIN_COPY.noAccountPrefix}{" "}
+            <Link className="font-medium text-black dark:text-white" href={ROUTES.signup}>
+              {LOGIN_COPY.noAccountLink}
+            </Link>
+          </div>
+          <div>
+            <Link className="font-medium text-black dark:text-white" href={ROUTES.forgotPassword}>
+              {LOGIN_COPY.forgotPasswordLink}
+            </Link>
+          </div>
         </div>
       }
     >

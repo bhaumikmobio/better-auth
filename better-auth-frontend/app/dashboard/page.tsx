@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -41,6 +42,12 @@ export default function DashboardPage() {
       maxWidthClassName="max-w-xl"
     >
       <div className="flex items-start justify-between gap-4">
+        <Link
+          className="inline-flex h-10 items-center rounded-xl border border-black/10 px-4 text-sm font-medium text-black hover:bg-black/5 dark:border-white/10 dark:text-white dark:hover:bg-white/10"
+          href={ROUTES.changePassword}
+        >
+          {DASHBOARD_COPY.changePassword}
+        </Link>
         <Button
           variant="secondary"
           onClick={handleLogout}
