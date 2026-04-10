@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
+import { PasswordField } from "@/components/form/PasswordField";
 import { CenteredCard } from "@/components/layout/CenteredCard";
 import { Button } from "@/components/ui/Button";
 import { getResultErrorMessage, unknownToMessage } from "@/common/auth-feedback";
@@ -79,32 +80,24 @@ export default function ResetPasswordPage() {
           </div>
         ) : null}
 
-        <label className="block text-sm font-medium">
-          {RESET_PASSWORD_COPY.passwordLabel}
-          <input
-            className="mt-2 w-full rounded-xl border border-black/10 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-black/10 dark:border-white/10 dark:bg-zinc-900 dark:focus:ring-white/10"
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-            type="password"
-            autoComplete="new-password"
-            placeholder={RESET_PASSWORD_COPY.passwordPlaceholder}
-          />
-        </label>
+        <PasswordField
+          label={RESET_PASSWORD_COPY.passwordLabel}
+          value={newPassword}
+          onChange={(e) => setNewPassword(e.target.value)}
+          autoComplete="new-password"
+          placeholder={RESET_PASSWORD_COPY.passwordPlaceholder}
+        />
         <p className="text-xs text-zinc-600 dark:text-zinc-400">
           {RESET_PASSWORD_COPY.minLengthHint}
         </p>
 
-        <label className="block text-sm font-medium">
-          {RESET_PASSWORD_COPY.confirmPasswordLabel}
-          <input
-            className="mt-2 w-full rounded-xl border border-black/10 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-black/10 dark:border-white/10 dark:bg-zinc-900 dark:focus:ring-white/10"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            type="password"
-            autoComplete="new-password"
-            placeholder={RESET_PASSWORD_COPY.passwordPlaceholder}
-          />
-        </label>
+        <PasswordField
+          label={RESET_PASSWORD_COPY.confirmPasswordLabel}
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+          autoComplete="new-password"
+          placeholder={RESET_PASSWORD_COPY.passwordPlaceholder}
+        />
 
         <Button
           onClick={handleResetPassword}

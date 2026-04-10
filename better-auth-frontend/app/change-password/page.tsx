@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { getResultErrorMessage, unknownToMessage } from "@/common/auth-feedback";
+import { PasswordField } from "@/components/form/PasswordField";
 import { CenteredCard } from "@/components/layout/CenteredCard";
 import { Button } from "@/components/ui/Button";
 import { CHANGE_PASSWORD_COPY, PASSWORD_POLICY } from "@/constants/messages";
@@ -78,44 +79,32 @@ export default function ChangePasswordPage() {
       }
     >
       <div className="space-y-4">
-        <label className="block text-sm font-medium">
-          {CHANGE_PASSWORD_COPY.currentPasswordLabel}
-          <input
-            className="mt-2 w-full rounded-xl border border-black/10 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-black/10 dark:border-white/10 dark:bg-zinc-900 dark:focus:ring-white/10"
-            value={currentPassword}
-            onChange={(e) => setCurrentPassword(e.target.value)}
-            type="password"
-            autoComplete="current-password"
-            placeholder={CHANGE_PASSWORD_COPY.passwordPlaceholder}
-          />
-        </label>
+        <PasswordField
+          label={CHANGE_PASSWORD_COPY.currentPasswordLabel}
+          value={currentPassword}
+          onChange={(e) => setCurrentPassword(e.target.value)}
+          autoComplete="current-password"
+          placeholder={CHANGE_PASSWORD_COPY.passwordPlaceholder}
+        />
 
-        <label className="block text-sm font-medium">
-          {CHANGE_PASSWORD_COPY.newPasswordLabel}
-          <input
-            className="mt-2 w-full rounded-xl border border-black/10 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-black/10 dark:border-white/10 dark:bg-zinc-900 dark:focus:ring-white/10"
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-            type="password"
-            autoComplete="new-password"
-            placeholder={CHANGE_PASSWORD_COPY.passwordPlaceholder}
-          />
-        </label>
+        <PasswordField
+          label={CHANGE_PASSWORD_COPY.newPasswordLabel}
+          value={newPassword}
+          onChange={(e) => setNewPassword(e.target.value)}
+          autoComplete="new-password"
+          placeholder={CHANGE_PASSWORD_COPY.passwordPlaceholder}
+        />
         <p className="text-xs text-zinc-600 dark:text-zinc-400">
           {CHANGE_PASSWORD_COPY.minLengthHint}
         </p>
 
-        <label className="block text-sm font-medium">
-          {CHANGE_PASSWORD_COPY.confirmPasswordLabel}
-          <input
-            className="mt-2 w-full rounded-xl border border-black/10 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-black/10 dark:border-white/10 dark:bg-zinc-900 dark:focus:ring-white/10"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            type="password"
-            autoComplete="new-password"
-            placeholder={CHANGE_PASSWORD_COPY.passwordPlaceholder}
-          />
-        </label>
+        <PasswordField
+          label={CHANGE_PASSWORD_COPY.confirmPasswordLabel}
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+          autoComplete="new-password"
+          placeholder={CHANGE_PASSWORD_COPY.passwordPlaceholder}
+        />
 
         <label className="flex items-center gap-2 text-sm">
           <input

@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
+import { AuthInputField } from "@/components/form/AuthInputField";
+import { PasswordField } from "@/components/form/PasswordField";
 import { CenteredCard } from "@/components/layout/CenteredCard";
 import { Button } from "@/components/ui/Button";
 import { SIGNUP_COPY } from "@/constants/messages";
@@ -57,41 +59,31 @@ export default function SignupPage() {
       }
     >
         <div className="space-y-4">
-          <label className="block text-sm font-medium">
-            {SIGNUP_COPY.nameLabel}
-            <input
-              className="mt-2 w-full rounded-xl border border-black/10 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-black/10 dark:border-white/10 dark:bg-zinc-900 dark:focus:ring-white/10"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              type="text"
-              autoComplete="name"
-              placeholder={SIGNUP_COPY.namePlaceholder}
-            />
-          </label>
+          <AuthInputField
+            label={SIGNUP_COPY.nameLabel}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            type="text"
+            autoComplete="name"
+            placeholder={SIGNUP_COPY.namePlaceholder}
+          />
 
-          <label className="block text-sm font-medium">
-            {SIGNUP_COPY.emailLabel}
-            <input
-              className="mt-2 w-full rounded-xl border border-black/10 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-black/10 dark:border-white/10 dark:bg-zinc-900 dark:focus:ring-white/10"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              type="email"
-              autoComplete="email"
-              placeholder={SIGNUP_COPY.emailPlaceholder}
-            />
-          </label>
+          <AuthInputField
+            label={SIGNUP_COPY.emailLabel}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            type="email"
+            autoComplete="email"
+            placeholder={SIGNUP_COPY.emailPlaceholder}
+          />
 
-          <label className="block text-sm font-medium">
-            {SIGNUP_COPY.passwordLabel}
-            <input
-              className="mt-2 w-full rounded-xl border border-black/10 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-black/10 dark:border-white/10 dark:bg-zinc-900 dark:focus:ring-white/10"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              type="password"
-              autoComplete="new-password"
-              placeholder={SIGNUP_COPY.passwordPlaceholder}
-            />
-          </label>
+          <PasswordField
+            label={SIGNUP_COPY.passwordLabel}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            autoComplete="new-password"
+            placeholder={SIGNUP_COPY.passwordPlaceholder}
+          />
 
           <Button
             onClick={handleSignup}

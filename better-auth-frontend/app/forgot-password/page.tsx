@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
+import { AuthInputField } from "@/components/form/AuthInputField";
 import { CenteredCard } from "@/components/layout/CenteredCard";
 import { Button } from "@/components/ui/Button";
 import { getResultErrorMessage, unknownToMessage } from "@/common/auth-feedback";
@@ -50,17 +51,14 @@ export default function ForgotPasswordPage() {
       }
     >
       <div className="space-y-4">
-        <label className="block text-sm font-medium">
-          {FORGOT_PASSWORD_COPY.emailLabel}
-          <input
-            className="mt-2 w-full rounded-xl border border-black/10 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-black/10 dark:border-white/10 dark:bg-zinc-900 dark:focus:ring-white/10"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            type="email"
-            autoComplete="email"
-            placeholder={FORGOT_PASSWORD_COPY.emailPlaceholder}
-          />
-        </label>
+        <AuthInputField
+          label={FORGOT_PASSWORD_COPY.emailLabel}
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          type="email"
+          autoComplete="email"
+          placeholder={FORGOT_PASSWORD_COPY.emailPlaceholder}
+        />
 
         <Button
           onClick={handleRequestReset}
