@@ -2,6 +2,14 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
+## Authentication configuration
+
+Set `NEXT_PUBLIC_AUTH_BASE_URL` to the backend Better Auth URL, for example:
+
+- `NEXT_PUBLIC_AUTH_BASE_URL=http://localhost:3001`
+
+This must match the backend `BETTER_AUTH_URL` origin used for OAuth callbacks.
+
 First, run the development server:
 
 ```bash

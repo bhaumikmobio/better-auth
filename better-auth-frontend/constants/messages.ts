@@ -9,6 +9,8 @@ export const PASSWORD_POLICY = {
 export const LOGIN_COPY = {
   title: "Log in",
   description: "Use your email and password.",
+  googleButton: "Continue with Google",
+  googleButtonLoading: "Redirecting to Google...",
   emailLabel: "Email",
   passwordLabel: "Password",
   emailPlaceholder: "you@example.com",
@@ -22,12 +24,15 @@ export const LOGIN_COPY = {
     fallbackInvalidCredentials: "Invalid email or password",
     success: "Logged in.",
     failure: "Login failed",
+    googleFailure: "Google login failed",
   },
 } as const;
 
 export const SIGNUP_COPY = {
   title: "Sign up",
   description: "Create an account with email and password.",
+  googleButton: "Sign up with Google",
+  googleButtonLoading: "Redirecting to Google...",
   nameLabel: "Name",
   emailLabel: "Email",
   passwordLabel: "Password",
@@ -41,6 +46,7 @@ export const SIGNUP_COPY = {
   toast: {
     fallback: "Signup failed",
     success: "Account created. Please log in.",
+    googleFailure: "Google signup failed",
   },
 } as const;
 

@@ -25,6 +25,24 @@
 
 [Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
 
+## Better Auth Google OAuth setup
+
+Configure these environment variables before starting the backend:
+
+- `BETTER_AUTH_SECRET`
+- `BETTER_AUTH_URL` (example: `http://localhost:3001`)
+- `FRONTEND_URL` (example: `http://localhost:3000`)
+- `GOOGLE_CLIENT_ID`
+- `GOOGLE_CLIENT_SECRET`
+
+Google Cloud Console must include this redirect URI:
+
+- `${BETTER_AUTH_URL}/auth/callback/google`
+
+Example for local development:
+
+- `http://localhost:3001/auth/callback/google`
+
 ## Project setup
 
 ```bash

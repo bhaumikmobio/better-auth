@@ -18,10 +18,13 @@ export default function SignupPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [isEmailLoading, setIsEmailLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+
+  const isLoading = isEmailLoading || isGoogleLoading;
 
   const handleSignup = async () => {
-    setIsLoading(true);
+    setIsEmailLoading(true);
 
     try {
       const result: unknown = await authClient.signUp.email({
@@ -41,7 +44,28 @@ export default function SignupPage() {
     } catch (e) {
       toast.error(unknownToMessage(e, SIGNUP_COPY.toast.fallback));
     } finally {
-      setIsLoading(false);
+      setIsEmailLoading(false);
+    }
+  };
+
+  const handleGoogleSignup = async () => {
+    setIsGoogleLoading(true);
+
+    try {
+      const appOrigin = window.location.origin;
+      const result: unknown = await authClient.signIn.social({
+        provider: "google",
+        callbackURL: `${appOrigin}${ROUTES.dashboard}`,
+        errorCallbackURL: `${appOrigin}${ROUTES.login}`,
+      });
+
+      const resultError = getResultErrorMessage(result, SIGNUP_COPY.toast.googleFailure);
+      if (resultError) {
+        toast.error(resultError);
+      }
+    } catch (e) {
+      toast.error(unknownToMessage(e, SIGNUP_COPY.toast.googleFailure));
+      setIsGoogleLoading(false);
     }
   };
 
@@ -87,11 +111,24 @@ export default function SignupPage() {
 
           <Button
             onClick={handleSignup}
-            disabled={!name || !email || !password}
-            isLoading={isLoading}
+            disabled={!name || !email || !password || isLoading}
+            isLoading={isEmailLoading}
             fullWidth
           >
-            {isLoading ? SIGNUP_COPY.submitLoading : SIGNUP_COPY.submit}
+            {isEmailLoading ? SIGNUP_COPY.submitLoading : SIGNUP_COPY.submit}
+          </Button>
+
+          <div className="text-center text-xs text-zinc-500">or</div>
+
+          <Button
+            onClick={handleGoogleSignup}
+            disabled={isLoading}
+            isLoading={isGoogleLoading}
+            fullWidth
+            variant="secondary"
+            className="border-blue-600 !text-blue-600 hover:bg-blue-50 dark:border-blue-400 dark:!text-blue-400 dark:hover:bg-blue-950/30"
+          >
+            {isGoogleLoading ? SIGNUP_COPY.googleButtonLoading : SIGNUP_COPY.googleButton}
           </Button>
         </div>
     </CenteredCard>

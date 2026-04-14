@@ -17,10 +17,13 @@ export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [isEmailLoading, setIsEmailLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+
+  const isLoading = isEmailLoading || isGoogleLoading;
 
   const handleLogin = async () => {
-    setIsLoading(true);
+    setIsEmailLoading(true);
 
     try {
       const result: unknown = await authClient.signIn.email({
@@ -42,7 +45,28 @@ export default function LoginPage() {
     } catch (e) {
       toast.error(unknownToMessage(e, LOGIN_COPY.toast.failure));
     } finally {
-      setIsLoading(false);
+      setIsEmailLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setIsGoogleLoading(true);
+
+    try {
+      const appOrigin = window.location.origin;
+      const result: unknown = await authClient.signIn.social({
+        provider: "google",
+        callbackURL: `${appOrigin}${ROUTES.dashboard}`,
+        errorCallbackURL: `${appOrigin}${ROUTES.login}`,
+      });
+
+      const resultError = getResultErrorMessage(result, LOGIN_COPY.toast.googleFailure);
+      if (resultError) {
+        toast.error(resultError);
+      }
+    } catch (e) {
+      toast.error(unknownToMessage(e, LOGIN_COPY.toast.googleFailure));
+      setIsGoogleLoading(false);
     }
   };
 
@@ -86,11 +110,24 @@ export default function LoginPage() {
 
           <Button
             onClick={handleLogin}
-            disabled={!email || !password}
-            isLoading={isLoading}
+            disabled={!email || !password || isLoading}
+            isLoading={isEmailLoading}
             fullWidth
           >
-            {isLoading ? LOGIN_COPY.submitLoading : LOGIN_COPY.submit}
+            {isEmailLoading ? LOGIN_COPY.submitLoading : LOGIN_COPY.submit}
+          </Button>
+
+          <div className="text-center text-xs text-zinc-500">or</div>
+
+          <Button
+            onClick={handleGoogleLogin}
+            disabled={isLoading}
+            isLoading={isGoogleLoading}
+            fullWidth
+            variant="secondary"
+            className="border-blue-600 !text-blue-600 hover:bg-blue-50 dark:border-blue-400 dark:!text-blue-400 dark:hover:bg-blue-950/30"
+          >
+            {isGoogleLoading ? LOGIN_COPY.googleButtonLoading : LOGIN_COPY.googleButton}
           </Button>
         </div>
     </CenteredCard>

@@ -7,6 +7,12 @@ if (!authSecret) {
   throw new Error('BETTER_AUTH_SECRET is required');
 }
 
+const googleClientId = process.env.GOOGLE_CLIENT_ID;
+const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
+if (!googleClientId || !googleClientSecret) {
+  throw new Error('GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET are required');
+}
+
 export const auth = betterAuth({
   secret: authSecret,
   baseURL: process.env.BETTER_AUTH_URL,
@@ -18,6 +24,13 @@ export const auth = betterAuth({
   },
   verification: {
     storeInDatabase: true,
+  },
+  socialProviders: {
+    google: {
+      clientId: googleClientId,
+      clientSecret: googleClientSecret,
+      prompt: 'select_account',
+    },
   },
   emailAndPassword: {
     enabled: true,
