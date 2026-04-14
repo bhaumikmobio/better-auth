@@ -2,20 +2,31 @@ import { Injectable, OnModuleDestroy } from '@nestjs/common';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../generated/prisma/client';
 
-const connectionString = process.env.DATABASE_URL;
-if (!connectionString) {
-  throw new Error('DATABASE_URL is required');
-}
+let prismaClient: PrismaClient | null = null;
 
-export const prisma = new PrismaClient({
-  adapter: new PrismaPg({ connectionString }),
-});
+const getConnectionString = (): string => {
+  const connectionString = process.env.DATABASE_URL;
+  if (!connectionString) {
+    throw new Error('DATABASE_URL is required when DATABASE=postgres');
+  }
+  return connectionString;
+};
+
+export const getPrismaClient = (): PrismaClient => {
+  if (!prismaClient) {
+    prismaClient = new PrismaClient({
+      adapter: new PrismaPg({ connectionString: getConnectionString() }),
+    });
+  }
+
+  return prismaClient;
+};
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleDestroy {
   constructor() {
     super({
-      adapter: new PrismaPg({ connectionString }),
+      adapter: new PrismaPg({ connectionString: getConnectionString() }),
     });
   }
 

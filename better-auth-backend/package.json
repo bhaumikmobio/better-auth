@@ -21,6 +21,7 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
+    "@better-auth/mongo-adapter": "^1.6.3",
     "@better-auth/prisma-adapter": "^1.6.1",
     "@nestjs/common": "^11.0.1",
     "@nestjs/core": "^11.0.1",
@@ -28,6 +29,7 @@
     "@prisma/adapter-pg": "^7.7.0",
     "@prisma/client": "^7.7.0",
     "better-auth": "^1.6.1",
+    "mongodb": "^6.21.0",
     "pg": "^8.20.0",
     "prisma": "^7.7.0",
     "reflect-metadata": "^0.2.2",
