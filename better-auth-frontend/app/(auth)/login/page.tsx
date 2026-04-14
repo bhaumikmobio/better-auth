@@ -83,11 +83,6 @@ export default function LoginPage() {
               {LOGIN_COPY.noAccountLink}
             </Link>
           </div>
-          <div>
-            <Link className="font-medium text-black dark:text-white" href={ROUTES.forgotPassword}>
-              {LOGIN_COPY.forgotPasswordLink}
-            </Link>
-          </div>
         </div>
       }
     >
@@ -108,6 +103,12 @@ export default function LoginPage() {
             autoComplete="current-password"
             placeholder={LOGIN_COPY.passwordPlaceholder}
           />
+
+          <div className="text-right">
+            <Link className="text-sm font-medium text-black dark:text-white" href={ROUTES.forgotPassword}>
+              {LOGIN_COPY.forgotPasswordLink}
+            </Link>
+          </div>
 
           <Button
             onClick={handleLogin}
