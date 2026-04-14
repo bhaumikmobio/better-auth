@@ -65,6 +65,7 @@ export default function SignupPage() {
       }
     } catch (e) {
       toast.error(unknownToMessage(e, SIGNUP_COPY.toast.googleFailure));
+    } finally {
       setIsGoogleLoading(false);
     }
   };

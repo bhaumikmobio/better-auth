@@ -66,6 +66,7 @@ export default function LoginPage() {
       }
     } catch (e) {
       toast.error(unknownToMessage(e, LOGIN_COPY.toast.googleFailure));
+    } finally {
       setIsGoogleLoading(false);
     }
   };
