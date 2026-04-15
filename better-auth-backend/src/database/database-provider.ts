@@ -1,4 +1,4 @@
-export type DatabaseProvider = 'postgres' | 'mongodb';
+export type DatabaseProvider = 'postgres' | 'mongodb' | 'mysql';
 
 type MongoClientLike = {
   db: (name?: string) => unknown;
@@ -42,8 +42,12 @@ export const resolveDatabaseProvider = (): DatabaseProvider => {
     return 'mongodb';
   }
 
+  if (rawProvider === 'mysql') {
+    return 'mysql';
+  }
+
   throw new Error(
-    `Unsupported DATABASE value "${process.env.DATABASE}". Use "postgres" or "mongodb".`,
+    `Unsupported DATABASE value "${process.env.DATABASE}". Use "postgres", "mongodb", or "mysql".`,
   );
 };
 

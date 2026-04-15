@@ -5,6 +5,7 @@ import {
   createMongoDatabase,
   resolveDatabaseProvider,
 } from '../../database/database-provider';
+import { getMysqlKysely } from '../../database/kysely.service';
 import { getPrismaClient } from '../../database/prisma.service';
 
 const authSecret = process.env.BETTER_AUTH_SECRET;
@@ -25,6 +26,13 @@ const getDatabaseAdapter = (): unknown => {
     return prismaAdapter(getPrismaClient(), {
       provider: 'postgresql',
     });
+  }
+
+  if (databaseProvider === 'mysql') {
+    return {
+      db: getMysqlKysely(),
+      type: 'mysql',
+    };
   }
 
   const mongodbUri = process.env.MONGODB_URI;
