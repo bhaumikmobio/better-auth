@@ -4,6 +4,7 @@ export const APP_COPY = {
 
 export const PASSWORD_POLICY = {
   minLength: 8,
+  maxLength: 64,
 } as const;
 
 export const LOGIN_COPY = {
