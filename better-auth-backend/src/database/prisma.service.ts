@@ -5,9 +5,9 @@ import { PrismaClient } from '../generated/prisma/client';
 let prismaClient: PrismaClient | null = null;
 
 const getConnectionString = (): string => {
-  const connectionString = process.env.DATABASE_URL;
+  const connectionString = process.env.POSTGRES_URL;
   if (!connectionString) {
-    throw new Error('DATABASE_URL is required when DATABASE=postgres');
+    throw new Error('POSTGRES_URL is required when DATABASE=postgres');
   }
   return connectionString;
 };

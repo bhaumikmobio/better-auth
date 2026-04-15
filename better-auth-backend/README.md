@@ -30,7 +30,7 @@
 Configure these environment variables before starting the backend:
 
 - `DATABASE` (`postgres` or `mongodb`)
-- `DATABASE_URL` (required when `DATABASE=postgres`)
+- `POSTGRES_URL` (required when `DATABASE=postgres`)
 - `MONGODB_URI` (required when `DATABASE=mongodb`, example: `mongodb://localhost:27017/betterAuth`)
 - `BETTER_AUTH_SECRET`
 - `BETTER_AUTH_URL` (example: `http://localhost:3001`)
