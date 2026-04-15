@@ -5,13 +5,11 @@ import {
   createMongoDatabase,
   resolveDatabaseProvider,
 } from '../../database/database-provider';
+import { getRequiredEnv } from '../../database/common.util';
 import { getMysqlKysely } from '../../database/kysely.service';
 import { getPrismaClient } from '../../database/prisma.service';
 
-const authSecret = process.env.BETTER_AUTH_SECRET;
-if (!authSecret) {
-  throw new Error('BETTER_AUTH_SECRET is required');
-}
+const authSecret = getRequiredEnv('BETTER_AUTH_SECRET');
 
 const googleClientId = process.env.GOOGLE_CLIENT_ID;
 const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
@@ -22,37 +20,37 @@ if (!googleClientId || !googleClientSecret) {
 const databaseProvider = resolveDatabaseProvider();
 
 const getDatabaseAdapter = (): unknown => {
-  if (databaseProvider === 'postgres') {
-    return prismaAdapter(getPrismaClient(), {
-      provider: 'postgresql',
-    });
+  switch (databaseProvider) {
+    case 'postgres':
+      return prismaAdapter(getPrismaClient(), {
+        provider: 'postgresql',
+      });
+    case 'mysql':
+      return {
+        db: getMysqlKysely(),
+        type: 'mysql',
+      };
+    default: {
+      const mongodbUri = getRequiredEnv('MONGODB_URI', {
+        errorMessage: 'MONGODB_URI is required when DATABASE=mongodb',
+      });
+      const { database, client } = createMongoDatabase(mongodbUri);
+
+      return mongodbAdapter(database as never, {
+        client: client as never,
+        transaction: false,
+      });
+    }
   }
-
-  if (databaseProvider === 'mysql') {
-    return {
-      db: getMysqlKysely(),
-      type: 'mysql',
-    };
-  }
-
-  const mongodbUri = process.env.MONGODB_URI;
-  if (!mongodbUri) {
-    throw new Error('MONGODB_URI is required when DATABASE=mongodb');
-  }
-
-  const { database, client } = createMongoDatabase(mongodbUri);
-
-  return mongodbAdapter(database as never, {
-    client: client as never,
-    transaction: false,
-  });
 };
+
+const trustedOrigins = [process.env.FRONTEND_URL ?? 'http://localhost:3000'];
 
 export const auth = betterAuth({
   secret: authSecret,
   baseURL: process.env.BETTER_AUTH_URL,
   basePath: '/auth',
-  trustedOrigins: [process.env.FRONTEND_URL ?? 'http://localhost:3000'],
+  trustedOrigins,
   database: getDatabaseAdapter() as never,
   session: {
     storeSessionInDatabase: true,
