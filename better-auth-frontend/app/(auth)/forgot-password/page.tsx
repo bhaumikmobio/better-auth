@@ -3,6 +3,11 @@
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
+import {
+  AUTH_FOOTER_TEXT_CLASSNAME,
+  AUTH_LINK_CLASSNAME,
+  AUTH_TITLE_CLASSNAME,
+} from "@/common/auth-ui";
 import { AuthInputField } from "@/components/form/AuthInputField";
 import { CenteredCard } from "@/components/layout/CenteredCard";
 import { Button } from "@/components/ui/Button";
@@ -41,10 +46,11 @@ export default function ForgotPasswordPage() {
   return (
     <CenteredCard
       title={FORGOT_PASSWORD_COPY.title}
+      titleClassName={AUTH_TITLE_CLASSNAME}
       description={FORGOT_PASSWORD_COPY.description}
       footer={
-        <div className="text-sm text-zinc-600 dark:text-zinc-400">
-          <Link className="font-medium text-black dark:text-white" href={ROUTES.login}>
+        <div className={AUTH_FOOTER_TEXT_CLASSNAME}>
+          <Link className={AUTH_LINK_CLASSNAME} href={ROUTES.login}>
             {FORGOT_PASSWORD_COPY.backToLogin}
           </Link>
         </div>

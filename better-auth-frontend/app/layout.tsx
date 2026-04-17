@@ -5,6 +5,9 @@ import { APP_COPY } from "@/constants/messages";
 
 export const metadata: Metadata = {
   title: APP_COPY.appTitle,
+  icons: {
+    icon: "/favIcon.png",
+  },
 };
 
 export default function RootLayout({

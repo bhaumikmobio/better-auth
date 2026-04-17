@@ -4,6 +4,11 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
+import {
+  AUTH_FOOTER_TEXT_CLASSNAME,
+  AUTH_LINK_CLASSNAME,
+  AUTH_TITLE_CLASSNAME,
+} from "@/common/auth-ui";
 import { PasswordField } from "@/components/form/PasswordField";
 import { CenteredCard } from "@/components/layout/CenteredCard";
 import { Button } from "@/components/ui/Button";
@@ -64,10 +69,11 @@ export default function ResetPasswordPage() {
   return (
     <CenteredCard
       title={RESET_PASSWORD_COPY.title}
+      titleClassName={AUTH_TITLE_CLASSNAME}
       description={RESET_PASSWORD_COPY.description}
       footer={
-        <div className="text-sm text-zinc-600 dark:text-zinc-400">
-          <Link className="font-medium text-black dark:text-white" href={ROUTES.login}>
+        <div className={AUTH_FOOTER_TEXT_CLASSNAME}>
+          <Link className={AUTH_LINK_CLASSNAME} href={ROUTES.login}>
             {RESET_PASSWORD_COPY.goToLogin}
           </Link>
         </div>
@@ -75,7 +81,7 @@ export default function ResetPasswordPage() {
     >
       <div className="space-y-4">
         {hasInvalidTokenError ? (
-          <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900/30 dark:bg-red-900/20 dark:text-red-200">
+          <div className="rounded-xl border border-rose-200 bg-rose-50/90 p-3 text-sm text-rose-700">
             {RESET_PASSWORD_COPY.invalidToken}
           </div>
         ) : null}
@@ -87,7 +93,7 @@ export default function ResetPasswordPage() {
           autoComplete="new-password"
           placeholder={RESET_PASSWORD_COPY.passwordPlaceholder}
         />
-        <p className="text-xs text-zinc-600 dark:text-zinc-400">
+        <p className="text-xs text-slate-500">
           {RESET_PASSWORD_COPY.minLengthHint}
         </p>
 

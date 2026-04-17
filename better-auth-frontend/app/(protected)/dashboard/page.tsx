@@ -43,14 +43,14 @@ export default function DashboardPage() {
     >
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <Link
-          className="inline-flex h-10 items-center rounded-xl border border-black/10 px-4 text-sm font-medium text-black hover:bg-black/5 dark:border-white/10 dark:text-white dark:hover:bg-white/10"
+          className="inline-flex h-11 items-center rounded-xl border border-sky-200/80 bg-white/80 px-4 text-sm font-semibold text-sky-700 shadow-sm transition hover:border-sky-300 hover:bg-cyan-50/85 hover:text-sky-800"
           href={ROUTES.changePassword}
         >
           {DASHBOARD_COPY.changePassword}
         </Link>
         <Button
           variant="secondary"
-          className="border border-zinc-300 bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
+          className="border border-rose-200/80 bg-rose-50/85 !text-rose-700 hover:border-rose-300 hover:bg-rose-100/85 hover:!text-rose-800"
           onClick={handleLogout}
           disabled={isPending || !user}
           isLoading={isSigningOut}
@@ -59,7 +59,7 @@ export default function DashboardPage() {
         </Button>
       </div>
 
-      <div className="mt-6 rounded-2xl border border-blue-200 bg-blue-50 p-6 text-base text-blue-700 dark:border-blue-500/40 dark:bg-blue-500/10 dark:text-blue-200">
+      <div className="mt-6 rounded-2xl border border-cyan-200/80 bg-cyan-50/85 p-6 text-base text-sky-800 shadow-[0_20px_35px_-32px_rgba(14,116,144,0.95)]">
         {isPending ? (
           <div>{DASHBOARD_COPY.sessionLoading}</div>
         ) : user ? (

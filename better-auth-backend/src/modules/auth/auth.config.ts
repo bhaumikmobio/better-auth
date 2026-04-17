@@ -44,7 +44,9 @@ const getDatabaseAdapter = (): unknown => {
   }
 };
 
-const trustedOrigins = [process.env.FRONTEND_URL ?? 'http://localhost:3000'];
+const frontendOrigin =
+  process.env.FRONTEND_URL?.trim() ?? 'http://localhost:3000';
+const trustedOrigins = [frontendOrigin];
 
 export const auth = betterAuth({
   secret: authSecret,
@@ -68,7 +70,7 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     sendResetPassword: ({ user, url }) => {
-      // Email sending is intentionally not implemented yet.
+      // Email sending is intentionally not implemented yet will be implemented in the future.
       // This log confirms reset flow and provides the URL in development.
       console.info(
         `Password reset requested for ${user.email}. Reset URL: ${url}`,

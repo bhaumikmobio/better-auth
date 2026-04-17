@@ -4,8 +4,16 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
+import {
+  AUTH_DIVIDER_CLASSNAME,
+  AUTH_FOOTER_TEXT_CLASSNAME,
+  AUTH_GOOGLE_BUTTON_CLASSNAME,
+  AUTH_LINK_CLASSNAME,
+  AUTH_TITLE_CLASSNAME,
+} from "@/common/auth-ui";
 import { AuthInputField } from "@/components/form/AuthInputField";
 import { PasswordField } from "@/components/form/PasswordField";
+import { GoogleIcon } from "@/components/icons/SvgIcons";
 import { CenteredCard } from "@/components/layout/CenteredCard";
 import { Button } from "@/components/ui/Button";
 import { SIGNUP_COPY } from "@/constants/messages";
@@ -73,65 +81,73 @@ export default function SignupPage() {
   return (
     <CenteredCard
       title={SIGNUP_COPY.title}
+      titleClassName={AUTH_TITLE_CLASSNAME}
       description={SIGNUP_COPY.description}
       footer={
-        <div className="text-sm text-zinc-600 dark:text-zinc-400">
+        <div className={AUTH_FOOTER_TEXT_CLASSNAME}>
           {SIGNUP_COPY.haveAccountPrefix}{" "}
-          <Link className="font-medium text-black dark:text-white" href={ROUTES.login}>
+          <Link className={AUTH_LINK_CLASSNAME} href={ROUTES.login}>
             {SIGNUP_COPY.haveAccountLink}
           </Link>
         </div>
       }
     >
-        <div className="space-y-4">
-          <AuthInputField
-            label={SIGNUP_COPY.nameLabel}
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            type="text"
-            autoComplete="name"
-            placeholder={SIGNUP_COPY.namePlaceholder}
-          />
+      <div className="space-y-4">
+        <AuthInputField
+          label={SIGNUP_COPY.nameLabel}
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          type="text"
+          autoComplete="name"
+          placeholder={SIGNUP_COPY.namePlaceholder}
+        />
 
-          <AuthInputField
-            label={SIGNUP_COPY.emailLabel}
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            type="email"
-            autoComplete="email"
-            placeholder={SIGNUP_COPY.emailPlaceholder}
-          />
+        <AuthInputField
+          label={SIGNUP_COPY.emailLabel}
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          type="email"
+          autoComplete="email"
+          placeholder={SIGNUP_COPY.emailPlaceholder}
+        />
 
-          <PasswordField
-            label={SIGNUP_COPY.passwordLabel}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            autoComplete="new-password"
-            placeholder={SIGNUP_COPY.passwordPlaceholder}
-          />
+        <PasswordField
+          label={SIGNUP_COPY.passwordLabel}
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          autoComplete="new-password"
+          placeholder={SIGNUP_COPY.passwordPlaceholder}
+        />
 
-          <Button
-            onClick={handleSignup}
-            disabled={!name || !email || !password || isLoading}
-            isLoading={isEmailLoading}
-            fullWidth
-          >
-            {isEmailLoading ? SIGNUP_COPY.submitLoading : SIGNUP_COPY.submit}
-          </Button>
+        <Button
+          onClick={handleSignup}
+          disabled={!name || !email || !password || isLoading}
+          isLoading={isEmailLoading}
+          fullWidth
+        >
+          {isEmailLoading ? SIGNUP_COPY.submitLoading : SIGNUP_COPY.submit}
+        </Button>
 
-          <div className="text-center text-xs text-zinc-500">or</div>
+        <div className={AUTH_DIVIDER_CLASSNAME}>or</div>
 
-          <Button
-            onClick={handleGoogleSignup}
-            disabled={isLoading}
-            isLoading={isGoogleLoading}
-            fullWidth
-            variant="secondary"
-            className="border-blue-600 !text-blue-600 hover:bg-blue-50 dark:border-blue-400 dark:!text-blue-400 dark:hover:bg-blue-950/30"
-          >
-            {isGoogleLoading ? SIGNUP_COPY.googleButtonLoading : SIGNUP_COPY.googleButton}
-          </Button>
-        </div>
+        <Button
+          onClick={handleGoogleSignup}
+          disabled={isLoading}
+          isLoading={isGoogleLoading}
+          fullWidth
+          variant="secondary"
+          className={AUTH_GOOGLE_BUTTON_CLASSNAME}
+        >
+          {isGoogleLoading ? (
+            SIGNUP_COPY.googleButtonLoading
+          ) : (
+            <span className="inline-flex items-center gap-2">
+              <GoogleIcon />
+              <span>{SIGNUP_COPY.googleButton}</span>
+            </span>
+          )}
+        </Button>
+      </div>
     </CenteredCard>
   );
 }

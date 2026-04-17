@@ -4,10 +4,19 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
+import {
+  AUTH_DIVIDER_CLASSNAME,
+  AUTH_FOOTER_TEXT_CLASSNAME,
+  AUTH_GOOGLE_BUTTON_CLASSNAME,
+  AUTH_LINK_CLASSNAME,
+  AUTH_TITLE_CLASSNAME,
+} from "@/common/auth-ui";
 import { AuthInputField } from "@/components/form/AuthInputField";
 import { PasswordField } from "@/components/form/PasswordField";
+import { GoogleIcon } from "@/components/icons/SvgIcons";
 import { CenteredCard } from "@/components/layout/CenteredCard";
 import { Button } from "@/components/ui/Button";
+import { BrandLogo } from "@/components/ui/BrandLogo";
 import { LOGIN_COPY } from "@/constants/messages";
 import { ROUTES } from "@/constants/routes";
 import { authClient } from "@/lib/auth-client";
@@ -74,64 +83,73 @@ export default function LoginPage() {
   return (
     <CenteredCard
       title={LOGIN_COPY.title}
+      titleClassName={AUTH_TITLE_CLASSNAME}
       description={LOGIN_COPY.description}
+      topContent={<BrandLogo size="md" />}
       footer={
-        <div className="text-sm text-zinc-600 dark:text-zinc-400 space-y-2">
+        <div className={`space-y-2 ${AUTH_FOOTER_TEXT_CLASSNAME}`}>
           <div>
             {LOGIN_COPY.noAccountPrefix}{" "}
-            <Link className="font-medium text-black dark:text-white" href={ROUTES.signup}>
+            <Link className={AUTH_LINK_CLASSNAME} href={ROUTES.signup}>
               {LOGIN_COPY.noAccountLink}
             </Link>
           </div>
         </div>
       }
     >
-        <div className="space-y-4">
-          <AuthInputField
-            label={LOGIN_COPY.emailLabel}
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            type="email"
-            autoComplete="email"
-            placeholder={LOGIN_COPY.emailPlaceholder}
-          />
+      <div className="space-y-4">
+        <AuthInputField
+          label={LOGIN_COPY.emailLabel}
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          type="email"
+          autoComplete="email"
+          placeholder={LOGIN_COPY.emailPlaceholder}
+        />
 
-          <PasswordField
-            label={LOGIN_COPY.passwordLabel}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            autoComplete="current-password"
-            placeholder={LOGIN_COPY.passwordPlaceholder}
-          />
+        <PasswordField
+          label={LOGIN_COPY.passwordLabel}
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          autoComplete="current-password"
+          placeholder={LOGIN_COPY.passwordPlaceholder}
+        />
 
-          <div className="text-right">
-            <Link className="text-sm font-medium text-black dark:text-white" href={ROUTES.forgotPassword}>
-              {LOGIN_COPY.forgotPasswordLink}
-            </Link>
-          </div>
-
-          <Button
-            onClick={handleLogin}
-            disabled={!email || !password || isLoading}
-            isLoading={isEmailLoading}
-            fullWidth
-          >
-            {isEmailLoading ? LOGIN_COPY.submitLoading : LOGIN_COPY.submit}
-          </Button>
-
-          <div className="text-center text-xs text-zinc-500">or</div>
-
-          <Button
-            onClick={handleGoogleLogin}
-            disabled={isLoading}
-            isLoading={isGoogleLoading}
-            fullWidth
-            variant="secondary"
-            className="border-blue-600 !text-blue-600 hover:bg-blue-50 dark:border-blue-400 dark:!text-blue-400 dark:hover:bg-blue-950/30"
-          >
-            {isGoogleLoading ? LOGIN_COPY.googleButtonLoading : LOGIN_COPY.googleButton}
-          </Button>
+        <div className="text-right">
+          <Link className={`text-sm ${AUTH_LINK_CLASSNAME}`} href={ROUTES.forgotPassword}>
+            {LOGIN_COPY.forgotPasswordLink}
+          </Link>
         </div>
+
+        <Button
+          onClick={handleLogin}
+          disabled={!email || !password || isLoading}
+          isLoading={isEmailLoading}
+          fullWidth
+        >
+          {isEmailLoading ? LOGIN_COPY.submitLoading : LOGIN_COPY.submit}
+        </Button>
+
+        <div className={AUTH_DIVIDER_CLASSNAME}>or</div>
+
+        <Button
+          onClick={handleGoogleLogin}
+          disabled={isLoading}
+          isLoading={isGoogleLoading}
+          fullWidth
+          variant="secondary"
+          className={AUTH_GOOGLE_BUTTON_CLASSNAME}
+        >
+          {isGoogleLoading ? (
+            LOGIN_COPY.googleButtonLoading
+          ) : (
+            <span className="inline-flex items-center gap-2">
+              <GoogleIcon />
+              <span>{LOGIN_COPY.googleButton}</span>
+            </span>
+          )}
+        </Button>
+      </div>
     </CenteredCard>
   );
 }

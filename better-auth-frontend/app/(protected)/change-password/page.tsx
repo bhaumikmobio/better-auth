@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { getResultErrorMessage, unknownToMessage } from "@/common/auth-feedback";
+import { AUTH_FOOTER_TEXT_CLASSNAME, AUTH_LINK_CLASSNAME } from "@/common/auth-ui";
 import { PasswordField } from "@/components/form/PasswordField";
 import { CenteredCard } from "@/components/layout/CenteredCard";
 import { Button } from "@/components/ui/Button";
@@ -71,8 +72,8 @@ export default function ChangePasswordPage() {
       title={CHANGE_PASSWORD_COPY.title}
       description={CHANGE_PASSWORD_COPY.description}
       footer={
-        <div className="text-sm text-zinc-600 dark:text-zinc-400">
-          <Link className="font-medium text-black dark:text-white" href={ROUTES.dashboard}>
+        <div className={AUTH_FOOTER_TEXT_CLASSNAME}>
+          <Link className={AUTH_LINK_CLASSNAME} href={ROUTES.dashboard}>
             {CHANGE_PASSWORD_COPY.backToDashboard}
           </Link>
         </div>
@@ -94,7 +95,7 @@ export default function ChangePasswordPage() {
           autoComplete="new-password"
           placeholder={CHANGE_PASSWORD_COPY.passwordPlaceholder}
         />
-        <p className="text-xs text-zinc-600 dark:text-zinc-400">
+        <p className="text-xs text-slate-500">
           {CHANGE_PASSWORD_COPY.minLengthHint}
         </p>
 
@@ -106,11 +107,12 @@ export default function ChangePasswordPage() {
           placeholder={CHANGE_PASSWORD_COPY.passwordPlaceholder}
         />
 
-        <label className="flex items-center gap-2 text-sm">
+        <label className="flex items-center gap-2 text-sm text-slate-600">
           <input
             type="checkbox"
             checked={revokeOtherSessions}
             onChange={(e) => setRevokeOtherSessions(e.target.checked)}
+            className="h-4 w-4 rounded border-sky-300 text-sky-600 focus:ring-cyan-200"
           />
           {CHANGE_PASSWORD_COPY.revokeOtherSessionsLabel}
         </label>

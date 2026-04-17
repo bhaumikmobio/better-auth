@@ -15,7 +15,7 @@ export function PasswordField({ label, ...inputProps }: PasswordFieldProps) {
   const inputClassName = `${INPUT_CLASSNAME} pr-10${className ? ` ${className}` : ""}`;
 
   return (
-    <label className="block text-sm font-medium">
+    <label className="block text-sm font-medium text-slate-700">
       {label}
       <div className="relative mt-2">
         <input
@@ -29,7 +29,7 @@ export function PasswordField({ label, ...inputProps }: PasswordFieldProps) {
           onClick={() => setIsVisible((prev) => !prev)}
           aria-label={isVisible ? "Hide password" : "Show password"}
           aria-pressed={isVisible}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 transition-colors hover:text-zinc-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-black/10 dark:text-zinc-400 dark:hover:text-zinc-200 dark:focus-visible:ring-white/10"
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 transition-colors hover:text-sky-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-200/70"
         >
           {isVisible ? <EyeOffIcon /> : <EyeIcon />}
         </button>
