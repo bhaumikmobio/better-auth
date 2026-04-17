@@ -10,16 +10,17 @@ import {
   AUTH_GOOGLE_BUTTON_CLASSNAME,
   AUTH_LINK_CLASSNAME,
   AUTH_TITLE_CLASSNAME,
-} from "@/common/auth-ui";
+} from "@/utils/auth-ui";
 import { AuthInputField } from "@/components/form/AuthInputField";
 import { PasswordField } from "@/components/form/PasswordField";
 import { GoogleIcon } from "@/components/icons/SvgIcons";
 import { CenteredCard } from "@/components/layout/CenteredCard";
+import { AppLoader } from "@/components/ui/AppLoader";
 import { Button } from "@/components/ui/Button";
 import { SIGNUP_COPY } from "@/constants/messages";
 import { ROUTES } from "@/constants/routes";
 import { authClient } from "@/lib/auth-client";
-import { getResultErrorMessage, unknownToMessage } from "@/common/auth-feedback";
+import { getResultErrorMessage, unknownToMessage } from "@/utils/auth-feedback";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -77,6 +78,14 @@ export default function SignupPage() {
       setIsGoogleLoading(false);
     }
   };
+
+  if (isLoading) {
+    return (
+      <AppLoader
+        message={isGoogleLoading ? SIGNUP_COPY.googleButtonLoading : SIGNUP_COPY.submitLoading}
+      />
+    );
+  }
 
   return (
     <CenteredCard

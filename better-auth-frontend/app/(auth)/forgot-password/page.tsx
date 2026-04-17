@@ -7,11 +7,12 @@ import {
   AUTH_FOOTER_TEXT_CLASSNAME,
   AUTH_LINK_CLASSNAME,
   AUTH_TITLE_CLASSNAME,
-} from "@/common/auth-ui";
+} from "@/utils/auth-ui";
 import { AuthInputField } from "@/components/form/AuthInputField";
 import { CenteredCard } from "@/components/layout/CenteredCard";
+import { AppLoader } from "@/components/ui/AppLoader";
 import { Button } from "@/components/ui/Button";
-import { getResultErrorMessage, unknownToMessage } from "@/common/auth-feedback";
+import { getResultErrorMessage, unknownToMessage } from "@/utils/auth-feedback";
 import { FORGOT_PASSWORD_COPY } from "@/constants/messages";
 import { ROUTES } from "@/constants/routes";
 import { authClient } from "@/lib/auth-client";
@@ -42,6 +43,10 @@ export default function ForgotPasswordPage() {
       setIsLoading(false);
     }
   };
+
+  if (isLoading) {
+    return <AppLoader message={FORGOT_PASSWORD_COPY.submitLoading} />;
+  }
 
   return (
     <CenteredCard

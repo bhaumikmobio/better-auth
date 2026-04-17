@@ -2,6 +2,11 @@ export const APP_COPY = {
   appTitle: "Better Auth Demo",
 } as const;
 
+export const LOADER_COPY = {
+  default: "Securing your session...",
+  redirectingToLogin: "Redirecting to login...",
+} as const;
+
 export const PASSWORD_POLICY = {
   minLength: 8,
   maxLength: 64,
@@ -103,6 +108,8 @@ export const RESET_PASSWORD_COPY = {
 export const CHANGE_PASSWORD_COPY = {
   title: "Change password",
   description: "Update your password using your current password.",
+  sessionLoading: "Loading session...",
+  redirecting: "Redirecting to login...",
   currentPasswordLabel: "Current password",
   newPasswordLabel: "New password",
   confirmPasswordLabel: "Confirm new password",
@@ -116,6 +123,31 @@ export const CHANGE_PASSWORD_COPY = {
   toast: {
     success: "Password updated successfully.",
     failure: "Could not update password",
+  },
+} as const;
+
+export const ADMIN_COPY = {
+  overviewTitle: "Admin overview",
+  usersTitle: "User management",
+  loadingOverview: "Loading overview...",
+  loadingUsers: "Loading users...",
+  usersFetchFailed: "Failed to fetch users.",
+  usersEmpty: "No users found.",
+  tableHeaders: {
+    name: "Name",
+    email: "Email",
+    role: "Role",
+    status: "Status",
+  },
+  overviewStats: {
+    totalUsers: "Total users",
+    inactiveUsers: "Inactive users",
+    admins: "Admins",
+    standardUsers: "Standard users",
+    activeSuffix: "active",
+    needsReview: "Needs review",
+    accessControl: "Access control",
+    roleUser: "Role: user",
   },
 } as const;
 

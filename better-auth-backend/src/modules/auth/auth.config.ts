@@ -1,6 +1,7 @@
 import { mongodbAdapter } from 'better-auth/adapters/mongodb';
 import { prismaAdapter } from '@better-auth/prisma-adapter';
 import { betterAuth } from 'better-auth';
+import { admin } from 'better-auth/plugins';
 import {
   createMongoDatabase,
   resolveDatabaseProvider,
@@ -82,4 +83,10 @@ export const auth = betterAuth({
       return Promise.resolve();
     },
   },
+  plugins: [
+    // Minimal RBAC setup for user/admin role-based routing.
+    admin({
+      defaultRole: 'user',
+    }),
+  ],
 });

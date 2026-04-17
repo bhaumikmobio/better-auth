@@ -23,6 +23,12 @@ const sizeClasses = {
   },
 } as const;
 
+const imageSizes = {
+  sm: "40px",
+  md: "44px",
+  lg: "64px",
+} as const;
+
 export function BrandLogo({
   title = APP_COPY.appTitle,
   logoSrc = "/favIcon.png",
@@ -39,6 +45,7 @@ export function BrandLogo({
             src={logoSrc}
             alt={`${title} logo`}
             fill
+            sizes={imageSizes[size]}
             priority
             className="object-contain"
           />

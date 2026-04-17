@@ -1,83 +1,52 @@
-"use client";
-
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { toast } from "sonner";
-import { CenteredCard } from "@/components/layout/CenteredCard";
-import { Button } from "@/components/ui/Button";
+import { redirect } from "next/navigation";
+import { AppShell } from "@/components/layout/shell/AppShell";
 import { DASHBOARD_COPY } from "@/constants/messages";
 import { ROUTES } from "@/constants/routes";
-import { authClient } from "@/lib/auth-client";
+import { getSessionOrRedirect } from "@/lib/server/get-session-or-redirect";
 
-export default function DashboardPage() {
-  const router = useRouter();
-  const { data: session, isPending } = authClient.useSession();
-  const [isSigningOut, setIsSigningOut] = useState(false);
+function hasAdminRole(role: string | undefined): boolean {
+  if (!role) return false;
+  return role
+    .split(",")
+    .map((value) => value.trim())
+    .includes("admin");
+}
 
-  useEffect(() => {
-    if (isPending) return;
-    if (!session?.user) router.replace(ROUTES.login);
-  }, [isPending, session, router]);
+export default async function DashboardPage() {
+  const session = await getSessionOrRedirect();
+  const user = session.user as { email?: string | null; name?: string | null; role?: string };
 
-  const user = session?.user;
-
-  const handleLogout = async () => {
-    if (isSigningOut) return;
-    setIsSigningOut(true);
-    try {
-      await authClient.signOut();
-      toast.success(DASHBOARD_COPY.toast.logoutSuccess);
-    } finally {
-      setIsSigningOut(false);
-      router.replace(ROUTES.login);
-      router.refresh();
-    }
-  };
+  if (hasAdminRole(user.role)) {
+    redirect(ROUTES.admin);
+  }
 
   return (
-    <CenteredCard
+    <AppShell
       title={DASHBOARD_COPY.title}
       description={DASHBOARD_COPY.description}
-      maxWidthClassName="max-w-xl"
+      user={user}
     >
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <Link
-          className="inline-flex h-11 items-center rounded-xl border border-sky-200/80 bg-white/80 px-4 text-sm font-semibold text-sky-700 shadow-sm transition hover:border-sky-300 hover:bg-cyan-50/85 hover:text-sky-800"
-          href={ROUTES.changePassword}
-        >
-          {DASHBOARD_COPY.changePassword}
-        </Link>
-        <Button
-          variant="secondary"
-          className="border border-rose-200/80 bg-rose-50/85 !text-rose-700 hover:border-rose-300 hover:bg-rose-100/85 hover:!text-rose-800"
-          onClick={handleLogout}
-          disabled={isPending || !user}
-          isLoading={isSigningOut}
-        >
-          {isSigningOut ? DASHBOARD_COPY.logoutLoading : DASHBOARD_COPY.logout}
-        </Button>
+      <div className="space-y-4">
+        <p className="text-sm text-sky-900/90">
+          <span className="font-semibold">{DASHBOARD_COPY.signedInAsLabel}</span>{" "}
+          {user.email ?? DASHBOARD_COPY.unknownEmail}
+        </p>
+        {user.name ? (
+          <p className="text-sm text-sky-900/90">
+            <span className="font-semibold">{DASHBOARD_COPY.namePrefix}</span> {user.name}
+          </p>
+        ) : null}
+        <div className="rounded-xl border border-cyan-200/80 bg-cyan-50/85 p-4 text-sm text-sky-800">
+          Your account is authenticated and ready to use.
+          <br />
+          You can update your password from{" "}
+          <Link className="font-semibold underline" href={ROUTES.changePassword}>
+            {DASHBOARD_COPY.changePassword}
+          </Link>
+          .
+        </div>
       </div>
-
-      <div className="mt-6 rounded-2xl border border-cyan-200/80 bg-cyan-50/85 p-6 text-base text-sky-800 shadow-[0_20px_35px_-32px_rgba(14,116,144,0.95)]">
-        {isPending ? (
-          <div>{DASHBOARD_COPY.sessionLoading}</div>
-        ) : user ? (
-          <div className="space-y-2">
-            <div>
-              <span className="font-medium">{DASHBOARD_COPY.signedInAsLabel}</span>{" "}
-              {user.email ?? DASHBOARD_COPY.unknownEmail}
-            </div>
-            {user.name ? (
-              <div className="font-medium">
-                {DASHBOARD_COPY.namePrefix} {user.name}
-              </div>
-            ) : null}
-          </div>
-        ) : (
-          <div>{DASHBOARD_COPY.redirecting}</div>
-        )}
-      </div>
-    </CenteredCard>
+    </AppShell>
   );
 }

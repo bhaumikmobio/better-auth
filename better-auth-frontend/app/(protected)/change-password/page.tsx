@@ -4,10 +4,11 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { getResultErrorMessage, unknownToMessage } from "@/common/auth-feedback";
-import { AUTH_FOOTER_TEXT_CLASSNAME, AUTH_LINK_CLASSNAME } from "@/common/auth-ui";
+import { getResultErrorMessage, unknownToMessage } from "@/utils/auth-feedback";
+import { AUTH_FOOTER_TEXT_CLASSNAME, AUTH_LINK_CLASSNAME } from "@/utils/auth-ui";
 import { PasswordField } from "@/components/form/PasswordField";
 import { CenteredCard } from "@/components/layout/CenteredCard";
+import { AppLoader } from "@/components/ui/AppLoader";
 import { Button } from "@/components/ui/Button";
 import { CHANGE_PASSWORD_COPY, PASSWORD_POLICY } from "@/constants/messages";
 import { ROUTES } from "@/constants/routes";
@@ -26,6 +27,18 @@ export default function ChangePasswordPage() {
     if (isPending) return;
     if (!session?.user) router.replace(ROUTES.login);
   }, [isPending, session, router]);
+
+  if (isPending) {
+    return <AppLoader message={CHANGE_PASSWORD_COPY.sessionLoading} />;
+  }
+
+  if (!session?.user) {
+    return <AppLoader message={CHANGE_PASSWORD_COPY.redirecting} />;
+  }
+
+  if (isLoading) {
+    return <AppLoader message={CHANGE_PASSWORD_COPY.submitLoading} />;
+  }
 
   const handleChangePassword = async () => {
     if (newPassword.length < PASSWORD_POLICY.minLength) {

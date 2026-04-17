@@ -5,5 +5,9 @@ export const ROUTES = {
   resetPassword: "/reset-password",
   changePassword: "/change-password",
   dashboard: "/dashboard",
+  admin: "/admin",
+  adminOverview: "/admin/overview",
+  adminUsers: "/admin/users",
+  unauthorized: "/unauthorized",
 } as const;
 

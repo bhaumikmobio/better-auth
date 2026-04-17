@@ -10,17 +10,18 @@ import {
   AUTH_GOOGLE_BUTTON_CLASSNAME,
   AUTH_LINK_CLASSNAME,
   AUTH_TITLE_CLASSNAME,
-} from "@/common/auth-ui";
+} from "@/utils/auth-ui";
 import { AuthInputField } from "@/components/form/AuthInputField";
 import { PasswordField } from "@/components/form/PasswordField";
 import { GoogleIcon } from "@/components/icons/SvgIcons";
 import { CenteredCard } from "@/components/layout/CenteredCard";
+import { AppLoader } from "@/components/ui/AppLoader";
 import { Button } from "@/components/ui/Button";
 import { BrandLogo } from "@/components/ui/BrandLogo";
 import { LOGIN_COPY } from "@/constants/messages";
 import { ROUTES } from "@/constants/routes";
 import { authClient } from "@/lib/auth-client";
-import { getResultErrorMessage, unknownToMessage } from "@/common/auth-feedback";
+import { getResultErrorMessage, unknownToMessage } from "@/utils/auth-feedback";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -30,6 +31,14 @@ export default function LoginPage() {
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
   const isLoading = isEmailLoading || isGoogleLoading;
+
+  const hasAdminRole = (roleValue: unknown): boolean => {
+    if (typeof roleValue !== "string") return false;
+    return roleValue
+      .split(",")
+      .map((role) => role.trim())
+      .includes("admin");
+  };
 
   const handleLogin = async () => {
     setIsEmailLoading(true);
@@ -50,7 +59,8 @@ export default function LoginPage() {
       }
 
       toast.success(LOGIN_COPY.toast.success);
-      router.replace(ROUTES.dashboard);
+      const role = (result as { user?: { role?: unknown } })?.user?.role;
+      router.replace(hasAdminRole(role) ? ROUTES.admin : ROUTES.dashboard);
     } catch (e) {
       toast.error(unknownToMessage(e, LOGIN_COPY.toast.failure));
     } finally {
@@ -79,6 +89,14 @@ export default function LoginPage() {
       setIsGoogleLoading(false);
     }
   };
+
+  if (isLoading) {
+    return (
+      <AppLoader
+        message={isGoogleLoading ? LOGIN_COPY.googleButtonLoading : LOGIN_COPY.submitLoading}
+      />
+    );
+  }
 
   return (
     <CenteredCard

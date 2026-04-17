@@ -1,15 +1,9 @@
-import { redirect } from "next/navigation";
-import { ROUTES } from "@/constants/routes";
-import { getServerSessionState } from "@/lib/auth-server";
+import { getSessionOrRedirect } from "@/lib/server/get-session-or-redirect";
 
 export default async function ProtectedLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  const sessionState = await getServerSessionState();
-
-  if (sessionState.status === "unauthenticated") {
-    redirect(ROUTES.login);
-  }
+  await getSessionOrRedirect();
 
   return children;
 }

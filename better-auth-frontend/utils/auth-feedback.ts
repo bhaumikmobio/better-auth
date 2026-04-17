@@ -25,4 +25,3 @@ export function getResultErrorMessage(
 
   return unknownToMessage(error, fallback);
 }
-
