@@ -42,8 +42,13 @@ export function AppShell({
       ? [
           { href: ROUTES.adminOverview, label: "Overview" },
           { href: ROUTES.adminUsers, label: "Users" },
+          { href: ROUTES.adminStandup, label: "Stand-up" },
         ]
-      : [{ href: ROUTES.dashboard, label: "Dashboard" }]),
+      : [
+          { href: ROUTES.dashboard, label: "Dashboard" },
+          { href: ROUTES.standup, label: "Stand-up" },
+        ]),
+    { href: ROUTES.profile, label: "Profile" },
     { href: ROUTES.changePassword, label: "Change Password" },
   ];
 

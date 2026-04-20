@@ -4,10 +4,13 @@ export const ROUTES = {
   forgotPassword: "/forgot-password",
   resetPassword: "/reset-password",
   changePassword: "/change-password",
+  profile: "/profile",
   dashboard: "/dashboard",
+  standup: "/standup",
   admin: "/admin",
   adminOverview: "/admin/overview",
   adminUsers: "/admin/users",
+  adminStandup: "/admin/standup",
   unauthorized: "/unauthorized",
 } as const;
 

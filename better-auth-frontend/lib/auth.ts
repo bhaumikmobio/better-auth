@@ -56,13 +56,19 @@ export const auth = {
         return null;
       }
 
-      const response = await fetch(getSessionEndpoint(), {
-        method: "GET",
-        headers: {
-          cookie: cookieHeader,
-        },
-        cache: "no-store",
-      });
+      let response: Response;
+      try {
+        response = await fetch(getSessionEndpoint(), {
+          method: "GET",
+          headers: {
+            cookie: cookieHeader,
+          },
+          cache: "no-store",
+        });
+      } catch {
+        // Gracefully handle temporary auth/backend unavailability.
+        return null;
+      }
 
       if (!response.ok) {
         return null;

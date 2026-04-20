@@ -58,8 +58,22 @@ export const SIGNUP_COPY = {
 
 export const DASHBOARD_COPY = {
   title: "Dashboard",
-  description: "Minimal authenticated page.",
+  description: "Your project workspace and daily execution hub.",
   changePassword: "Change password",
+  openStandup: "Open daily stand-up",
+  managePassword: "Manage password",
+  projectWorkspaceTitle: "Project workspace",
+  projectWorkspaceDescription:
+    "Track execution with daily stand-ups and keep your account secure.",
+  quickActionsTitle: "Quick actions",
+  quickActionsDescription: "Jump to the most relevant project workflows.",
+  standupActionTitle: "Daily stand-up",
+  standupActionDescription: "Post progress updates, blockers, and team signals.",
+  securityActionTitle: "Security",
+  securityActionDescription: "Update password and maintain account hygiene.",
+  profileActionTitle: "Profile",
+  profileActionDescription: "Review your account details and assigned access role.",
+  openProfile: "Open profile",
   logout: "Logout",
   logoutLoading: "Signing out...",
   sessionLoading: "Loading session...",
@@ -124,6 +138,26 @@ export const CHANGE_PASSWORD_COPY = {
     success: "Password updated successfully.",
     failure: "Could not update password",
   },
+} as const;
+
+export const PROFILE_COPY = {
+  title: "Profile",
+  description: "Your account details and access information.",
+  accountDetailsTitle: "Account details",
+  accountDetailsDescription: "Basic information tied to your authenticated workspace session.",
+  fieldName: "Name",
+  fieldEmail: "Email",
+  fieldRole: "Role",
+  unknownValue: "Not available",
+  roleFallback: "user",
+  securityTitle: "Security actions",
+  securityDescription: "Manage credentials and session hygiene from one place.",
+  changePassword: "Change password",
+} as const;
+
+export const STANDUP_COPY = {
+  title: "Daily stand-up",
+  description: "Share progress, next steps, and blockers with your team.",
 } as const;
 
 export const ADMIN_COPY = {
