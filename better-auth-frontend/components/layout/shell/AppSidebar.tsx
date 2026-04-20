@@ -17,8 +17,8 @@ export function AppSidebar({ navItems, isSigningOut, onLogout }: AppSidebarProps
   const pathname = usePathname();
 
   return (
-    <aside className="border-b border-cyan-200/80 bg-white/75 p-4 backdrop-blur md:h-screen md:w-72 md:border-b-0 md:border-r md:p-5">
-      <div className="flex h-full flex-col">
+    <aside className="shrink-0 border-b border-cyan-200/80 bg-white/75 p-4 backdrop-blur md:flex md:h-full md:min-h-0 md:w-72 md:flex-col md:border-b-0 md:border-r md:p-5">
+      <div className="flex min-h-0 w-full flex-1 flex-col">
         <div className="mb-6">
           <div className="flex items-center gap-2.5">
             <Image

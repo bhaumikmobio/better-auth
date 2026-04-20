@@ -9,7 +9,7 @@ export default async function AdminLayout({
 
   return (
     <AppShell title="Admin" description="" user={user}>
-      <div className="h-full min-h-[calc(100vh-14rem)]">{children}</div>
+      {children}
     </AppShell>
   );
 }

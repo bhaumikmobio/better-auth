@@ -15,6 +15,7 @@ type AppShellProps = {
   description: string;
   user: AppShellUser;
   children: React.ReactNode;
+  mainVerticalPaddingClassName?: string;
 };
 
 function hasAdminRole(role: string | undefined): boolean {
@@ -25,7 +26,13 @@ function hasAdminRole(role: string | undefined): boolean {
     .includes("admin");
 }
 
-export function AppShell({ title, description, user, children }: AppShellProps) {
+export function AppShell({
+  title,
+  description,
+  user,
+  children,
+  mainVerticalPaddingClassName = "py-5 sm:py-6",
+}: AppShellProps) {
   const router = useRouter();
   const [isSigningOut, setIsSigningOut] = useState(false);
 
@@ -54,23 +61,23 @@ export function AppShell({ title, description, user, children }: AppShellProps) 
   };
 
   return (
-    <div className="min-h-screen">
-      <div className="flex min-h-screen w-full flex-col md:flex-row">
-        <AppSidebar navItems={navItems} isSigningOut={isSigningOut} onLogout={handleLogout} />
+    <div className="flex h-dvh max-h-dvh w-full flex-col overflow-hidden md:flex-row">
+      <AppSidebar navItems={navItems} isSigningOut={isSigningOut} onLogout={handleLogout} />
 
-        <div className="flex min-h-screen flex-1 flex-col">
-          <AppHeader title={title} description={description} />
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+        <AppHeader title={title} description={description} />
 
-          <main className="flex-1 px-4 py-5 sm:px-6 sm:py-6">
-            <div className="w-full">
-              <section className="rounded-2xl border border-cyan-200/80 bg-white/90 p-5 shadow-[0_20px_35px_-32px_rgba(14,116,144,0.95)] sm:p-6">
-                {children}
-              </section>
-            </div>
-          </main>
+        <main
+          className={`min-h-0 flex-1 overflow-y-auto px-4 sm:px-6 ${mainVerticalPaddingClassName}`}
+        >
+          <div className="flex min-h-full w-full flex-col">
+            <section className="flex min-h-full flex-1 flex-col rounded-2xl border border-cyan-200/80 bg-white/90 p-5 shadow-[0_20px_35px_-32px_rgba(14,116,144,0.95)] sm:p-6">
+              {children}
+            </section>
+          </div>
+        </main>
 
-          <AppFooter user={user} />
-        </div>
+        <AppFooter user={user} />
       </div>
     </div>
   );
