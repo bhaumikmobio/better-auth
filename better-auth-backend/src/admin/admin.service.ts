@@ -8,8 +8,6 @@ import { fromNodeHeaders } from 'better-auth/node';
 import type { IncomingHttpHeaders } from 'node:http';
 import { ADMIN_MESSAGES } from '../common/constants/admin.constants';
 import type { AppRole } from '../common/types/auth-user.type';
-import { resolveDatabaseProvider } from '../database/database-provider';
-import { getPrismaClient } from '../database/prisma.service';
 import { auth } from '../modules/auth/auth.config';
 import type { CreateAdminUserDto } from './dto/create-admin-user.dto';
 import type { UpdateAdminUserDto } from './dto/update-admin-user.dto';
@@ -38,8 +36,16 @@ type BetterAuthListUsersResult = {
   };
 };
 
+type BetterAuthGetUserResult = {
+  user?: {
+    role?: unknown;
+  };
+  role?: unknown;
+};
+
 const FALLBACK_NAME = 'Unknown user';
 const FALLBACK_EMAIL = 'unknown@example.com';
+const ROLE_LOOKUP_PAGE_SIZE = 200;
 
 const getStringValue = (
   source: Record<string, unknown>,
@@ -81,6 +87,18 @@ const unwrapCreateUserPayload = (raw: unknown): unknown => {
   return raw;
 };
 
+const extractRoleFromGetUser = (
+  raw: BetterAuthGetUserResult,
+): string | undefined => {
+  const fromNested = raw.user?.role;
+  if (typeof fromNested === 'string') {
+    return fromNested;
+  }
+
+  const fromRoot = raw.role;
+  return typeof fromRoot === 'string' ? fromRoot : undefined;
+};
+
 const toAdminUserListItem = (value: unknown): AdminUserListItem | null => {
   if (!value || typeof value !== 'object') {
     return null;
@@ -103,49 +121,115 @@ const toAdminUserListItem = (value: unknown): AdminUserListItem | null => {
 
 @Injectable()
 export class AdminService {
-  private async resolveTargetUserRole(
-    userId: string,
-    requestHeaders: IncomingHttpHeaders,
-  ): Promise<string | undefined> {
-    const api = auth.api as {
+  private getAdminApi() {
+    return auth.api as {
       getUser?: (args: {
         headers: Headers;
         query: { id: string };
       }) => Promise<unknown>;
+      listUsers?: (args: {
+        headers: Headers;
+        query: { limit: number; offset: number };
+      }) => Promise<unknown>;
+      createUser?: (args: {
+        headers: Headers;
+        body: {
+          email: string;
+          password: string;
+          name: string;
+          role: string;
+        };
+      }) => Promise<unknown>;
+      adminUpdateUser?: (args: {
+        headers: Headers;
+        body: { userId: string; data: Record<string, string> };
+      }) => Promise<unknown>;
+      removeUser?: (args: {
+        headers: Headers;
+        body: { userId: string };
+      }) => Promise<unknown>;
+      setRole: (args: {
+        headers: Headers;
+        body: { userId: string; role: AppRole };
+      }) => Promise<unknown>;
     };
+  }
+
+  private normalizeListUsersResult(result: BetterAuthListUsersResult): {
+    users: AdminUserListItem[];
+    total: number;
+  } {
+    const usersRaw = Array.isArray(result.users)
+      ? result.users
+      : Array.isArray(result.data?.users)
+        ? result.data?.users
+        : [];
+
+    const users = usersRaw
+      .map(toAdminUserListItem)
+      .filter((item): item is AdminUserListItem => item !== null);
+
+    const totalValue =
+      typeof result.total === 'number'
+        ? result.total
+        : typeof result.data?.total === 'number'
+          ? result.data.total
+          : users.length;
+
+    return {
+      users,
+      total: totalValue,
+    };
+  }
+
+  private async resolveTargetUserRole(
+    userId: string,
+    requestHeaders: IncomingHttpHeaders,
+  ): Promise<string | undefined> {
+    const api = this.getAdminApi();
+    const headers = fromNodeHeaders(requestHeaders);
 
     if (typeof api.getUser === 'function') {
       try {
-        const raw = await api.getUser({
-          headers: fromNodeHeaders(requestHeaders),
+        const raw = (await api.getUser({
+          headers,
           query: { id: userId },
-        });
-        if (raw && typeof raw === 'object') {
-          const root = raw as Record<string, unknown>;
-          const userPayload = root.user as Record<string, unknown> | undefined;
-          const fromNested =
-            typeof userPayload?.role === 'string'
-              ? userPayload.role
-              : undefined;
-          const fromRoot =
-            typeof root.role === 'string' ? root.role : undefined;
-          const resolved = fromNested ?? fromRoot;
-          if (resolved !== undefined) {
-            return resolved;
-          }
+        })) as BetterAuthGetUserResult;
+
+        const role = extractRoleFromGetUser(raw);
+        if (role !== undefined) {
+          return role;
         }
       } catch {
-        // Try database fallback below.
+        // Fall back to listUsers below.
       }
     }
 
-    if (resolveDatabaseProvider() === 'postgres') {
+    if (typeof api.listUsers !== 'function') {
+      return undefined;
+    }
+
+    let offset = 0;
+    let total = Number.POSITIVE_INFINITY;
+
+    while (offset < total) {
       try {
-        const row = await getPrismaClient().user.findUnique({
-          where: { id: userId },
-          select: { role: true },
-        });
-        return row?.role ?? undefined;
+        const raw = (await api.listUsers({
+          headers,
+          query: { limit: ROLE_LOOKUP_PAGE_SIZE, offset },
+        })) as BetterAuthListUsersResult;
+
+        const normalized = this.normalizeListUsersResult(raw);
+        const targetUser = normalized.users.find((item) => item.id === userId);
+        if (targetUser) {
+          return targetUser.role;
+        }
+
+        total = normalized.total;
+        if (normalized.users.length === 0) {
+          break;
+        }
+        offset += ROLE_LOOKUP_PAGE_SIZE;
       } catch {
         return undefined;
       }
@@ -158,17 +242,7 @@ export class AdminService {
     body: CreateAdminUserDto,
     requestHeaders: IncomingHttpHeaders,
   ): Promise<AdminUserListItem> {
-    const adminApi = auth.api as {
-      createUser?: (args: {
-        headers: Headers;
-        body: {
-          email: string;
-          password: string;
-          name: string;
-          role: string;
-        };
-      }) => Promise<unknown>;
-    };
+    const adminApi = this.getAdminApi();
 
     if (typeof adminApi.createUser !== 'function') {
       throw new InternalServerErrorException(
@@ -220,12 +294,7 @@ export class AdminService {
     }
 
     if (hasProfileFields) {
-      const adminApi = auth.api as {
-        adminUpdateUser?: (args: {
-          headers: Headers;
-          body: { userId: string; data: Record<string, string> };
-        }) => Promise<unknown>;
-      };
+      const adminApi = this.getAdminApi();
 
       if (!adminApi.adminUpdateUser) {
         throw new InternalServerErrorException(
@@ -270,12 +339,7 @@ export class AdminService {
       );
     }
 
-    const adminApi = auth.api as {
-      removeUser?: (args: {
-        headers: Headers;
-        body: { userId: string };
-      }) => Promise<unknown>;
-    };
+    const adminApi = this.getAdminApi();
 
     if (!adminApi.removeUser) {
       throw new InternalServerErrorException(
@@ -299,7 +363,8 @@ export class AdminService {
     requestHeaders: IncomingHttpHeaders,
   ) {
     // Forward caller headers so Better Auth can validate admin privileges.
-    return auth.api.setRole({
+    const adminApi = this.getAdminApi();
+    return adminApi.setRole({
       headers: fromNodeHeaders(requestHeaders),
       body: {
         userId,
@@ -312,12 +377,7 @@ export class AdminService {
     requestHeaders: IncomingHttpHeaders,
     options: ListUsersOptions,
   ): Promise<{ users: AdminUserListItem[]; total: number }> {
-    const adminApi = auth.api as {
-      listUsers?: (args: {
-        headers: Headers;
-        query: { limit: number; offset: number };
-      }) => Promise<unknown>;
-    };
+    const adminApi = this.getAdminApi();
 
     if (!adminApi.listUsers) {
       throw new InternalServerErrorException(
@@ -333,26 +393,6 @@ export class AdminService {
       },
     })) as BetterAuthListUsersResult;
 
-    const usersRaw = Array.isArray(result.users)
-      ? result.users
-      : Array.isArray(result.data?.users)
-        ? result.data?.users
-        : [];
-
-    const users = usersRaw
-      .map(toAdminUserListItem)
-      .filter((item): item is AdminUserListItem => item !== null);
-
-    const totalValue =
-      typeof result.total === 'number'
-        ? result.total
-        : typeof result.data?.total === 'number'
-          ? result.data.total
-          : users.length;
-
-    return {
-      users,
-      total: totalValue,
-    };
+    return this.normalizeListUsersResult(result);
   }
 }

@@ -24,6 +24,7 @@ type GetStandupFeedResponse = {
   message: string;
   data: {
     dailyPrompt: string;
+    hasSubmittedToday: boolean;
     standups: StandupFeedItem[];
   };
 };
@@ -47,7 +48,7 @@ type GetStandupAdminSummaryResponse = {
 type GetAdminUsersResponse = {
   message: string;
   data: {
-    users: Array<{ id: string }>;
+    users: Array<{ id: string; role?: string; status?: "active" | "inactive" }>;
     total: number;
   };
 };
@@ -111,9 +112,37 @@ export async function updateStandupDailyPrompt(dailyPrompt: string) {
 }
 
 export async function getAdminParticipationTotalUsers() {
-  const payload = await apiRequest<GetAdminUsersResponse>('/admin/users?limit=1&offset=0', {
-    method: 'GET',
-  });
+  const PAGE_SIZE = 200;
+  let offset = 0;
+  let total = Number.POSITIVE_INFINITY;
+  let participantCount = 0;
 
-  return payload.data.total;
+  while (offset < total) {
+    const payload = await apiRequest<GetAdminUsersResponse>(
+      `/admin/users?limit=${PAGE_SIZE}&offset=${offset}`,
+      {
+        method: 'GET',
+      },
+    );
+
+    const users = payload.data.users ?? [];
+    total = payload.data.total ?? users.length;
+
+    participantCount += users.filter((user) => {
+      const role = (user.role ?? '').toLowerCase();
+      const hasAdminRole = role
+        .split(',')
+        .map((value) => value.trim())
+        .includes('admin');
+      return !hasAdminRole;
+    }).length;
+
+    if (users.length === 0) {
+      break;
+    }
+
+    offset += PAGE_SIZE;
+  }
+
+  return participantCount;
 }

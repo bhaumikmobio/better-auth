@@ -32,10 +32,16 @@ const STEPS = [
 type StandupFormCardProps = {
   dailyPrompt: string;
   isSubmitting: boolean;
+  isSubmittedToday: boolean;
   onSubmit: (values: FormValues) => Promise<void>;
 };
 
-export function StandupFormCard({ dailyPrompt, isSubmitting, onSubmit }: StandupFormCardProps) {
+export function StandupFormCard({
+  dailyPrompt,
+  isSubmitting,
+  isSubmittedToday,
+  onSubmit,
+}: StandupFormCardProps) {
   const [stepIndex, setStepIndex] = useState(0);
   const [values, setValues] = useState<FormValues>({
     yesterday: "",
@@ -48,6 +54,7 @@ export function StandupFormCard({ dailyPrompt, isSubmitting, onSubmit }: Standup
   const isFinalStep = stepIndex === STEPS.length - 1;
   const currentValue = values[currentStep.key];
   const canContinue = currentValue.trim().length > 0;
+  const charCount = currentValue.trim().length;
 
   const progressPercent = useMemo(() => {
     return Math.round(((stepIndex + 1) / STEPS.length) * 100);
@@ -68,6 +75,12 @@ export function StandupFormCard({ dailyPrompt, isSubmitting, onSubmit }: Standup
             className="h-full rounded-full bg-gradient-to-r from-blue-500 via-sky-500 to-cyan-500 transition-all duration-300"
             style={{ width: `${progressPercent}%` }}
           />
+        </div>
+        <div className="flex items-center justify-between text-xs text-slate-500">
+          <p>
+            Step {stepIndex + 1} of {STEPS.length}
+          </p>
+          <p className="font-medium">{progressPercent}% complete</p>
         </div>
         <div className="flex flex-wrap gap-1.5">
           {STEPS.map((step, index) => (
@@ -93,9 +106,13 @@ export function StandupFormCard({ dailyPrompt, isSubmitting, onSubmit }: Standup
             transition={{ duration: 0.22, ease: "easeOut" }}
             className="space-y-3"
           >
-            <label className="block text-sm font-semibold text-slate-800">{currentStep.title}</label>
+            <div className="flex items-center justify-between">
+              <label className="block text-sm font-semibold text-slate-800">{currentStep.title}</label>
+              <span className="text-xs text-slate-500">{charCount} characters</span>
+            </div>
             <textarea
               value={values[currentStep.key]}
+              disabled={isSubmittedToday}
               onChange={(event) =>
                 setValues((prev) => ({
                   ...prev,
@@ -106,6 +123,9 @@ export function StandupFormCard({ dailyPrompt, isSubmitting, onSubmit }: Standup
               className="w-full rounded-2xl border border-slate-300/75 bg-slate-50/80 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-200"
               placeholder={currentStep.placeholder}
             />
+            <p className="text-xs text-slate-500">
+              Keep this short and specific so your team can quickly understand progress.
+            </p>
           </motion.div>
         </AnimatePresence>
       </div>
@@ -118,6 +138,7 @@ export function StandupFormCard({ dailyPrompt, isSubmitting, onSubmit }: Standup
           <input
             type="text"
             value={values.mood}
+            disabled={isSubmittedToday}
             onChange={(event) =>
               setValues((prev) => ({
                 ...prev,
@@ -130,11 +151,18 @@ export function StandupFormCard({ dailyPrompt, isSubmitting, onSubmit }: Standup
         </div>
       ) : null}
 
-      <div className="mt-6 flex items-center justify-between gap-3 border-t border-slate-200/80 pt-4">
+      {isSubmittedToday ? (
+        <div className="mt-6 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+          Stand-up submitted for today. You can post your next update tomorrow.
+        </div>
+      ) : null}
+
+      <div className="mt-4 flex flex-col-reverse gap-3 border-t border-slate-200/80 pt-4 sm:flex-row sm:items-center sm:justify-between">
         <Button
           variant="secondary"
           onClick={() => setStepIndex((prev) => Math.max(0, prev - 1))}
-          disabled={stepIndex === 0 || isSubmitting}
+          disabled={stepIndex === 0 || isSubmitting || isSubmittedToday}
+          className="w-full sm:w-auto"
         >
           Back
         </Button>
@@ -143,17 +171,23 @@ export function StandupFormCard({ dailyPrompt, isSubmitting, onSubmit }: Standup
           <Button
             onClick={() => void onSubmit(values)}
             disabled={
+              isSubmittedToday ||
               isSubmitting ||
               values.yesterday.trim().length === 0 ||
               values.today.trim().length === 0 ||
               values.blockers.trim().length === 0
             }
             isLoading={isSubmitting}
+            className="w-full sm:w-auto"
           >
             {isSubmitting ? "Submitting..." : "Submit stand-up"}
           </Button>
         ) : (
-          <Button onClick={() => setStepIndex((prev) => prev + 1)} disabled={!canContinue || isSubmitting}>
+          <Button
+            onClick={() => setStepIndex((prev) => prev + 1)}
+            disabled={!canContinue || isSubmitting || isSubmittedToday}
+            className="w-full sm:w-auto"
+          >
             Continue
           </Button>
         )}
