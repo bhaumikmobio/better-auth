@@ -26,7 +26,7 @@ type AuthModule = {
 };
 
 type UserRecord = {
-  id: string;
+  id?: string;
   role: string | null;
 };
 
@@ -229,15 +229,18 @@ const findUserByEmailMongo = async (
     const db = dbName ? client.db(dbName) : client.db();
 
     const user = await db
-      .collection<{ id: string; role?: string | null }>('user')
-      .findOne({ email }, { projection: { id: 1, role: 1 } });
+      .collection<{ _id?: unknown; role?: string | null }>('user')
+      .findOne({ email }, { projection: { _id: 1, role: 1 } });
 
-    if (!user?.id) {
+    if (!user) {
       return null;
     }
 
     return {
-      id: user.id,
+      id:
+        user._id !== undefined && user._id !== null
+          ? String(user._id)
+          : undefined,
       role: user.role ?? null,
     };
   } finally {
@@ -245,7 +248,7 @@ const findUserByEmailMongo = async (
   }
 };
 
-const setAdminRoleMongo = async (userId: string): Promise<void> => {
+const setAdminRoleMongo = async (email: string): Promise<void> => {
   const client = createMongoClient();
 
   try {
@@ -254,7 +257,7 @@ const setAdminRoleMongo = async (userId: string): Promise<void> => {
     const db = dbName ? client.db(dbName) : client.db();
     await db
       .collection('user')
-      .updateOne({ id: userId }, { $set: { role: 'admin' } });
+      .updateOne({ email }, { $set: { role: 'admin' } });
   } finally {
     await client.close();
   }
@@ -275,17 +278,24 @@ const findUserByEmail = async (
 
 const setAdminRole = async (
   provider: DatabaseProvider,
-  userId: string,
+  userId: string | undefined,
+  email: string,
 ): Promise<void> => {
   if (provider === 'postgres') {
+    if (!userId) {
+      throw new Error('Postgres user id is required to set role.');
+    }
     await setAdminRolePostgres(userId);
     return;
   }
   if (provider === 'mysql') {
+    if (!userId) {
+      throw new Error('MySQL user id is required to set role.');
+    }
     await setAdminRoleMysql(userId);
     return;
   }
-  await setAdminRoleMongo(userId);
+  await setAdminRoleMongo(email);
 };
 
 const run = async (): Promise<void> => {
@@ -305,7 +315,7 @@ const run = async (): Promise<void> => {
   }
 
   if (user.role !== 'admin') {
-    await setAdminRole(provider, user.id);
+    await setAdminRole(provider, user.id, email);
     console.info(`Updated role to admin for ${email}.`);
   } else {
     console.info(`Role is already admin for ${email}.`);
