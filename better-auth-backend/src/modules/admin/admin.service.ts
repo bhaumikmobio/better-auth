@@ -6,9 +6,9 @@ import {
 } from '@nestjs/common';
 import { fromNodeHeaders } from 'better-auth/node';
 import type { IncomingHttpHeaders } from 'node:http';
-import { ADMIN_MESSAGES } from '../common/constants/admin.constants';
-import type { AppRole } from '../common/types/auth-user.type';
-import { auth } from '../modules/auth/auth.config';
+import { ADMIN_MESSAGES } from '../../common/constants/admin.constants';
+import type { AppRole } from '../../common/types/auth-user.type';
+import { auth } from '../auth/auth.config';
 import type { CreateAdminUserDto } from './dto/create-admin-user.dto';
 import type { UpdateAdminUserDto } from './dto/update-admin-user.dto';
 

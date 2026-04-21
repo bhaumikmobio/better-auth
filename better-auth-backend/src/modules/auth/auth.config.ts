@@ -8,7 +8,7 @@ import {
 } from '../../database/database-provider';
 import { getRequiredEnv } from '../../database/common.util';
 import { getMysqlKysely } from '../../database/kysely.service';
-import { getPrismaClient } from '../../database/prisma.service';
+import { getPrismaClient } from '../../database/prisma/prisma.service';
 
 const authSecret = getRequiredEnv('BETTER_AUTH_SECRET');
 

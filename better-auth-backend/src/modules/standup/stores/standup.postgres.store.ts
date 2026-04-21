@@ -1,5 +1,5 @@
 import { ConflictException, NotFoundException } from '@nestjs/common';
-import type { PrismaService } from '../../../database/prisma.service';
+import type { PrismaService } from '../../../database/prisma/prisma.service';
 import {
   DEFAULT_PROMPT,
   groupReactions,

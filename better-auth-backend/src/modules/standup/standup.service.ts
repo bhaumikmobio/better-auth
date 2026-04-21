@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { resolveDatabaseProvider } from '../../database/database-provider';
-import { PrismaService } from '../../database/prisma.service';
+import { PrismaService } from '../../database/prisma/prisma.service';
 import { MongoDbStandupStore } from './stores/standup.mongodb.store';
 import { MysqlStandupStore } from './stores/standup.mysql.store';
 import { PostgresStandupStore } from './stores/standup.postgres.store';
