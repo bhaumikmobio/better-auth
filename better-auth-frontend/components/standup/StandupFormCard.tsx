@@ -66,7 +66,7 @@ export function StandupFormCard({
         <p className="text-xs font-semibold uppercase tracking-[0.14em] text-blue-700">
           Daily Prompt
         </p>
-        <div className="rounded-xl border border-blue-200/80 bg-gradient-to-r from-blue-50/95 via-sky-50/95 to-cyan-50/95 px-3 py-2.5 shadow-[0_12px_24px_-18px_rgba(37,99,235,0.45)]">
+        <div className="rounded-xl border border-blue-200/80 bg-[#f8f6f1] px-3 py-2.5 shadow-[0_12px_24px_-18px_rgba(37,99,235,0.28)]">
           <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-blue-700/90">Question of the day</p>
           <p className="mt-1 text-sm font-medium text-slate-800">{dailyPrompt}</p>
         </div>
