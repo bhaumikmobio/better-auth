@@ -30,7 +30,7 @@ export function AppSidebar({ navItems, isSigningOut, onLogout }: AppSidebarProps
             />
             <div>
               <h1 className="text-xl font-extrabold tracking-tight text-sky-900">{APP_COPY.appTitle}</h1>
-              <p className="mt-0.5 text-xs font-medium text-sky-700/80">Authenticated workspace</p>
+              <p className="mt-0.5 text-xs font-medium text-sky-700/80">Daily Standup Project Workspace</p>
             </div>
           </div>
         </div>

@@ -25,6 +25,8 @@ model User {
 
   accounts   Account[]
   sessions   Session[]
+  standups   Standup[]
+  reactions  Reaction[]
   banned     Boolean?  @default(false)
   banReason  String?
   banExpires DateTime?
@@ -80,4 +82,44 @@ model Verification {
 
   @@index([identifier])
   @@map("verification")
+}
+
+model Standup {
+  id        String     @id @default(uuid())
+  userId    String
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  yesterday String
+  today     String
+  blockers  String
+  mood      String?
+  createdAt DateTime   @default(now())
+  reactions Reaction[]
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("standup")
+}
+
+model Reaction {
+  id        String   @id @default(uuid())
+  standupId String
+  standup   Standup  @relation(fields: [standupId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  emoji     String
+  createdAt DateTime @default(now())
+
+  @@unique([standupId, userId, emoji])
+  @@index([standupId])
+  @@index([userId])
+  @@map("reaction")
+}
+
+model SystemSettings {
+  id          Int      @id @default(1)
+  dailyPrompt String   @default("What is your main goal today?")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("system_settings")
 }

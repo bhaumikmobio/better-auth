@@ -58,8 +58,22 @@ export const SIGNUP_COPY = {
 
 export const DASHBOARD_COPY = {
   title: "Dashboard",
-  description: "Minimal authenticated page.",
+  description: "Your project workspace and daily execution hub.",
   changePassword: "Change password",
+  openStandup: "Open daily stand-up",
+  managePassword: "Manage password",
+  projectWorkspaceTitle: "Project workspace",
+  projectWorkspaceDescription:
+    "Track execution with daily stand-ups and keep your account secure.",
+  quickActionsTitle: "Quick actions",
+  quickActionsDescription: "Jump to the most relevant project workflows.",
+  standupActionTitle: "Daily stand-up",
+  standupActionDescription: "Post progress updates, blockers, and team signals.",
+  securityActionTitle: "Security",
+  securityActionDescription: "Update password and maintain account hygiene.",
+  profileActionTitle: "Profile",
+  profileActionDescription: "Review your account details and assigned access role.",
+  openProfile: "Open profile",
   logout: "Logout",
   logoutLoading: "Signing out...",
   sessionLoading: "Loading session...",
@@ -126,6 +140,26 @@ export const CHANGE_PASSWORD_COPY = {
   },
 } as const;
 
+export const PROFILE_COPY = {
+  title: "Profile",
+  description: "Your account details and access information.",
+  accountDetailsTitle: "Account details",
+  accountDetailsDescription: "Basic information tied to your authenticated workspace session.",
+  fieldName: "Name",
+  fieldEmail: "Email",
+  fieldRole: "Role",
+  unknownValue: "Not available",
+  roleFallback: "user",
+  securityTitle: "Security actions",
+  securityDescription: "Manage credentials and session hygiene from one place.",
+  changePassword: "Change password",
+} as const;
+
+export const STANDUP_COPY = {
+  title: "Daily stand-up",
+  description: "Share progress, next steps, and blockers with your team.",
+} as const;
+
 export const ADMIN_COPY = {
   overviewTitle: "Admin overview",
   usersTitle: "User management",
@@ -138,6 +172,43 @@ export const ADMIN_COPY = {
     email: "Email",
     role: "Role",
     status: "Status",
+    actions: "Actions",
+  },
+  userActions: {
+    update: "Update",
+    delete: "Delete",
+    updateAriaLabel: "Edit user",
+    deleteAriaLabel: "Delete user",
+    cancel: "Cancel",
+    save: "Save changes",
+    saveLoading: "Saving...",
+    editTitle: "Edit user",
+    editDescription: "Update profile details and access role.",
+    nameLabel: "Name",
+    emailLabel: "Email",
+    roleLabel: "Role",
+    updateSuccess: "User updated successfully.",
+    updateFailed: "Could not update user.",
+    deleteDialogTitle: "Delete user?",
+    deleteDialogBody:
+      "This will permanently remove this account. This action cannot be undone.",
+    deleteConfirmAction: "Delete",
+    deleteConfirmLoading: "Deleting...",
+    deleteConfirm:
+      "Delete this user permanently? This cannot be undone.",
+    deleteSuccess: "User deleted.",
+    deleteFailed: "Could not delete user.",
+    cannotDeleteSelf: "You cannot delete your own account while signed in.",
+    cannotDeleteAdmin: "Admin users cannot be deleted here.",
+    addUserButton: "Add user",
+    addTitle: "Add user",
+    addDescription: "Create an account with name, email, temporary password, and role.",
+    passwordLabel: "Password",
+    passwordHint: `At least ${PASSWORD_POLICY.minLength} characters.`,
+    create: "Create user",
+    createLoading: "Creating...",
+    createSuccess: "User created.",
+    createFailed: "Could not create user.",
   },
   overviewStats: {
     totalUsers: "Total users",

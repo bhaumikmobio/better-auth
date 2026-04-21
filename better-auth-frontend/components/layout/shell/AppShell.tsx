@@ -42,8 +42,13 @@ export function AppShell({
       ? [
           { href: ROUTES.adminOverview, label: "Overview" },
           { href: ROUTES.adminUsers, label: "Users" },
+          { href: ROUTES.adminStandup, label: "Stand-up" },
         ]
-      : [{ href: ROUTES.dashboard, label: "Dashboard" }]),
+      : [
+          { href: ROUTES.dashboard, label: "Dashboard" },
+          { href: ROUTES.standup, label: "Stand-up" },
+        ]),
+    { href: ROUTES.profile, label: "Profile" },
     { href: ROUTES.changePassword, label: "Change Password" },
   ];
 
@@ -65,7 +70,7 @@ export function AppShell({
       <AppSidebar navItems={navItems} isSigningOut={isSigningOut} onLogout={handleLogout} />
 
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-        <AppHeader title={title} description={description} />
+        <AppHeader title={title} description={description} user={user} />
 
         <main
           className={`min-h-0 flex-1 overflow-y-auto px-4 sm:px-6 ${mainVerticalPaddingClassName}`}

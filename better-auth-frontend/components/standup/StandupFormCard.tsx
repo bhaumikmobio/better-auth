@@ -1,0 +1,198 @@
+"use client";
+
+import { AnimatePresence, motion } from "framer-motion";
+import { useMemo, useState } from "react";
+import { Button } from "@/components/ui/Button";
+
+type FormValues = {
+  yesterday: string;
+  today: string;
+  blockers: string;
+  mood: string;
+};
+
+const STEPS = [
+  {
+    key: "yesterday",
+    title: "Yesterday",
+    placeholder: "Share what you completed yesterday...",
+  },
+  {
+    key: "today",
+    title: "Today",
+    placeholder: "What are you planning to deliver today?",
+  },
+  {
+    key: "blockers",
+    title: "Blockers",
+    placeholder: "Any blockers? If none, write 'None'.",
+  },
+] as const;
+
+type StandupFormCardProps = {
+  dailyPrompt: string;
+  isSubmitting: boolean;
+  isSubmittedToday: boolean;
+  onSubmit: (values: FormValues) => Promise<void>;
+};
+
+export function StandupFormCard({
+  dailyPrompt,
+  isSubmitting,
+  isSubmittedToday,
+  onSubmit,
+}: StandupFormCardProps) {
+  const [stepIndex, setStepIndex] = useState(0);
+  const [values, setValues] = useState<FormValues>({
+    yesterday: "",
+    today: "",
+    blockers: "",
+    mood: "",
+  });
+
+  const currentStep = STEPS[stepIndex];
+  const isFinalStep = stepIndex === STEPS.length - 1;
+  const currentValue = values[currentStep.key];
+  const canContinue = currentValue.trim().length > 0;
+  const charCount = currentValue.trim().length;
+
+  const progressPercent = useMemo(() => {
+    return Math.round(((stepIndex + 1) / STEPS.length) * 100);
+  }, [stepIndex]);
+
+  return (
+    <article className="rounded-3xl border border-slate-300/60 bg-white/70 p-5 shadow-[0_25px_50px_-34px_rgba(30,41,59,0.75)] backdrop-blur-xl sm:p-6">
+      <div className="space-y-3">
+        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-blue-700">
+          Daily Prompt
+        </p>
+        <div className="rounded-xl border border-blue-200/80 bg-gradient-to-r from-blue-50/95 via-sky-50/95 to-cyan-50/95 px-3 py-2.5 shadow-[0_12px_24px_-18px_rgba(37,99,235,0.45)]">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-blue-700/90">Question of the day</p>
+          <p className="mt-1 text-sm font-medium text-slate-800">{dailyPrompt}</p>
+        </div>
+
+        <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200/70">
+          <div
+            className="h-full rounded-full bg-gradient-to-r from-blue-500 via-sky-500 to-cyan-500 transition-all duration-300"
+            style={{ width: `${progressPercent}%` }}
+          />
+        </div>
+        <div className="flex items-center justify-between text-xs text-slate-500">
+          <p>
+            Step {stepIndex + 1} of {STEPS.length}
+          </p>
+          <p className="font-medium">{progressPercent}% complete</p>
+        </div>
+        <div className="flex flex-wrap gap-1.5">
+          {STEPS.map((step, index) => (
+            <span
+              key={step.key}
+              className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${
+                index <= stepIndex ? "bg-blue-100 text-blue-800" : "bg-slate-100 text-slate-500"
+              }`}
+            >
+              {step.title}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      <div className="mt-5">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={currentStep.key}
+            initial={{ opacity: 0, x: 16 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -16 }}
+            transition={{ duration: 0.22, ease: "easeOut" }}
+            className="space-y-3"
+          >
+            <div className="flex items-center justify-between">
+              <label className="block text-sm font-semibold text-slate-800">{currentStep.title}</label>
+              <span className="text-xs text-slate-500">{charCount} characters</span>
+            </div>
+            <textarea
+              value={values[currentStep.key]}
+              disabled={isSubmittedToday}
+              onChange={(event) =>
+                setValues((prev) => ({
+                  ...prev,
+                  [currentStep.key]: event.target.value,
+                }))
+              }
+              rows={5}
+              className="w-full rounded-2xl border border-slate-300/75 bg-slate-50/80 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-200"
+              placeholder={currentStep.placeholder}
+            />
+            <p className="text-xs text-slate-500">
+              Keep this short and specific so your team can quickly understand progress.
+            </p>
+          </motion.div>
+        </AnimatePresence>
+      </div>
+
+      {isFinalStep ? (
+        <div className="mt-4 space-y-2">
+          <label className="block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+            Mood (optional)
+          </label>
+          <input
+            type="text"
+            value={values.mood}
+            disabled={isSubmittedToday}
+            onChange={(event) =>
+              setValues((prev) => ({
+                ...prev,
+                mood: event.target.value,
+              }))
+            }
+            className="w-full rounded-xl border border-slate-300/75 bg-slate-50/80 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-200"
+            placeholder="Calm, focused, energized..."
+          />
+        </div>
+      ) : null}
+
+      {isSubmittedToday ? (
+        <div className="mt-6 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+          Stand-up submitted for today. You can post your next update tomorrow.
+        </div>
+      ) : null}
+
+      <div className="mt-4 flex flex-col-reverse gap-3 border-t border-slate-200/80 pt-4 sm:flex-row sm:items-center sm:justify-between">
+        <Button
+          variant="secondary"
+          onClick={() => setStepIndex((prev) => Math.max(0, prev - 1))}
+          disabled={stepIndex === 0 || isSubmitting || isSubmittedToday}
+          className="w-full sm:w-auto"
+        >
+          Back
+        </Button>
+
+        {isFinalStep ? (
+          <Button
+            onClick={() => void onSubmit(values)}
+            disabled={
+              isSubmittedToday ||
+              isSubmitting ||
+              values.yesterday.trim().length === 0 ||
+              values.today.trim().length === 0 ||
+              values.blockers.trim().length === 0
+            }
+            isLoading={isSubmitting}
+            className="w-full sm:w-auto"
+          >
+            {isSubmitting ? "Submitting..." : "Submit stand-up"}
+          </Button>
+        ) : (
+          <Button
+            onClick={() => setStepIndex((prev) => prev + 1)}
+            disabled={!canContinue || isSubmitting || isSubmittedToday}
+            className="w-full sm:w-auto"
+          >
+            Continue
+          </Button>
+        )}
+      </div>
+    </article>
+  );
+}

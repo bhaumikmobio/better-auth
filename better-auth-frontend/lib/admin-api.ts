@@ -1,4 +1,6 @@
+import { PASSWORD_POLICY } from "@/constants/messages";
 import { apiRequest } from "@/lib/api-client";
+import type { UserRole } from "@/types/user.types";
 
 export type AdminUser = {
   id: string;
@@ -8,13 +10,16 @@ export type AdminUser = {
   status: "active" | "inactive";
 };
 
-type GetAdminUsersResponse = {
+type ApiSuccessEnvelope<T> = {
+  success?: boolean;
   message: string;
-  data: {
-    users: AdminUser[];
-    total: number;
-  };
+  data: T;
 };
+
+type GetAdminUsersResponse = ApiSuccessEnvelope<{
+  users: AdminUser[];
+  total: number;
+}>;
 
 export async function getAdminUsers(params?: {
   limit?: number;
@@ -33,4 +38,42 @@ export async function getAdminUsers(params?: {
   const payload = await apiRequest<GetAdminUsersResponse>(path);
 
   return payload.data;
+}
+
+export type UpdateAdminUserPayload = {
+  name?: string;
+  email?: string;
+  role?: UserRole;
+};
+
+export async function updateAdminUser(userId: string, payload: UpdateAdminUserPayload) {
+  await apiRequest(`/admin/users/${encodeURIComponent(userId)}`, {
+    method: "PATCH",
+    json: payload,
+  });
+}
+
+export async function deleteAdminUser(userId: string) {
+  await apiRequest(`/admin/users/${encodeURIComponent(userId)}`, {
+    method: "DELETE",
+  });
+}
+
+export type CreateAdminUserPayload = {
+  name: string;
+  email: string;
+  password: string;
+  role: UserRole;
+};
+
+export async function createAdminUser(payload: CreateAdminUserPayload): Promise<AdminUser> {
+  type CreateResponse = ApiSuccessEnvelope<AdminUser>;
+  if (payload.password.length < PASSWORD_POLICY.minLength) {
+    throw new Error(`Password must be at least ${PASSWORD_POLICY.minLength} characters.`);
+  }
+  const response = await apiRequest<CreateResponse>("/admin/users", {
+    method: "POST",
+    json: payload,
+  });
+  return response.data;
 }
