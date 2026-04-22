@@ -70,10 +70,12 @@ export class ChatbotService {
   }
 
   private buildStandupChunk(standup: StandupIndexSource): string | null {
+    const author =
+      standup.userName?.trim() && standup.userName.trim().length > 0
+        ? standup.userName.trim()
+        : 'Unknown user';
     const lines = [
-      `Standup ID: ${standup.standupId}`,
-      `Author ID: ${standup.userId}`,
-      `Author Name: ${standup.userName}`,
+      `Author: ${author}`,
       `Submitted At: ${standup.createdAt.toISOString()}`,
       `Yesterday: ${standup.yesterday.trim()}`,
       `Today: ${standup.today.trim()}`,
@@ -94,13 +96,52 @@ export class ChatbotService {
       'Use only the provided standup and daily prompt context.',
       'Do not invent tasks, users, or status updates.',
       'If context is missing, say "No matching standup context found."',
+      'Refer to people using Author names from the context only.',
+      'Do not mention standup IDs, user IDs, ObjectIds, or other database identifiers.',
+      'Distinguish multiple entries by Submitted At when needed.',
       'Keep answers concise and factual.',
     ].join(' ');
   }
 
+  private stripInternalIdsFromChunkText(content: string): string {
+    return content
+      .split('\n')
+      .filter((line) => {
+        const t = line.trimStart();
+        return (
+          !/^standup id:/i.test(t) &&
+          !/^author id:/i.test(t) &&
+          !/^author name:/i.test(t)
+        );
+      })
+      .join('\n')
+      .trim();
+  }
+
+  /** Prefer fresh chunks (names, no IDs); strip legacy ID lines from stored vector text. */
+  private enrichSourcesForPrompt(
+    sources: ChatbotSource[],
+    standups: StandupIndexSource[],
+  ): ChatbotSource[] {
+    const byStandupId = new Map(
+      standups.map((entry) => [entry.standupId, entry]),
+    );
+    return sources.map((source) => {
+      const standup = byStandupId.get(source.standupId);
+      if (standup) {
+        const chunk = this.buildStandupChunk(standup);
+        return chunk ? { ...source, content: chunk } : source;
+      }
+      const stripped = this.stripInternalIdsFromChunkText(source.content);
+      return stripped.length > 0
+        ? { ...source, content: stripped }
+        : source;
+    });
+  }
+
   private buildUserPrompt(
     query: string,
-    userId: string,
+    requesterLabel: string,
     dailyPrompt: string,
     sources: ChatbotSource[],
   ): string {
@@ -115,7 +156,7 @@ export class ChatbotService {
       'Answer the question using the context below.',
       'If unsure, state what is missing.',
       '',
-      `Requester user ID: ${userId}`,
+      `Requester: ${requesterLabel}`,
       `Current Daily Prompt: ${dailyPrompt}`,
       '',
       `Question:\n${query}`,
@@ -126,7 +167,7 @@ export class ChatbotService {
 
   private async generateAnswer(
     query: string,
-    userId: string,
+    requesterLabel: string,
     dailyPrompt: string,
     sources: ChatbotSource[],
   ): Promise<string> {
@@ -134,7 +175,12 @@ export class ChatbotService {
       { role: 'system', content: this.buildSystemPrompt() },
       {
         role: 'user',
-        content: this.buildUserPrompt(query, userId, dailyPrompt, sources),
+        content: this.buildUserPrompt(
+          query,
+          requesterLabel,
+          dailyPrompt,
+          sources,
+        ),
       },
     ]);
   }
@@ -212,10 +258,13 @@ export class ChatbotService {
       }
       const lines = standups
         .slice(0, 10)
-        .map(
-          (item, index) =>
-            `${index + 1}. User ${item.userId}: ${item.yesterday || 'N/A'}`,
-        )
+        .map((item, index) => {
+          const who =
+            item.userName?.trim() ||
+            item.userId ||
+            'Unknown user';
+          return `${index + 1}. ${who}: ${item.yesterday || 'N/A'}`;
+        })
         .join('\n');
       return `Yesterday updates from recent standups:\n${lines}`;
     }
@@ -230,14 +279,22 @@ export class ChatbotService {
         if (matched.length === 0) {
           return `No standup entries found with mood "${moodQuery}".`;
         }
-        return `Users with mood "${moodQuery}": ${matched
-          .map((item) => item.userId)
-          .join(', ')}.`;
+        const namesByUser = new Map<string, string>();
+        for (const item of matched) {
+          const label =
+            item.userName?.trim() ||
+            item.userId ||
+            'Unknown user';
+          namesByUser.set(item.userId, label);
+        }
+        return `Users with mood "${moodQuery}": ${Array.from(
+          namesByUser.values(),
+        ).join(', ')}.`;
       }
     }
 
     const userResponseMatch = lowered.match(
-      /response(?:s)?\s+of\s+(?:user\s+)?(.+)/i,
+      /response(?:s)?\s+(?:of|from)\s+(?:user\s+)?(.+)/i,
     );
     if (userResponseMatch?.[1]) {
       const rawSegment = userResponseMatch[1]
@@ -422,13 +479,22 @@ export class ChatbotService {
       );
     }
 
+    const enrichedSources = this.enrichSourcesForPrompt(
+      sources,
+      standupsForContext,
+    );
+    const requesterLabel =
+      args.requesterName?.trim() && args.requesterName.trim().length > 0
+        ? args.requesterName.trim()
+        : 'Authenticated user';
+
     const answer = await this.generateAnswer(
       args.query,
-      args.userId,
+      requesterLabel,
       dailyPrompt,
-      sources,
+      enrichedSources,
     );
 
-    return { answer, sources };
+    return { answer, sources: enrichedSources };
   }
 }

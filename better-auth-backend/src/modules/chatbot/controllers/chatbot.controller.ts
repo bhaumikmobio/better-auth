@@ -29,6 +29,7 @@ export class ChatbotController {
 
     const result = await this.chatbotService.askQuestion({
       userId,
+      requesterName: request.user?.name ?? undefined,
       query: this.chatbotService.validateQuestion(body?.query),
       topK: this.chatbotService.validateTopK(body?.topK),
     });
