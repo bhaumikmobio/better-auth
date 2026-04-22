@@ -2,6 +2,7 @@ import { prismaAdapter } from '@better-auth/prisma-adapter';
 import { mongodbAdapter } from 'better-auth/adapters/mongodb';
 import { betterAuth } from 'better-auth';
 import { admin } from 'better-auth/plugins';
+import { MONGODB_URI_REQUIRED_MESSAGE } from '../common/constants/app.constants';
 import { getRequiredEnv } from '../common/utils/env.util';
 import {
   createMongoDatabase,
@@ -33,7 +34,7 @@ const getDatabaseAdapter = (): unknown => {
       };
     default: {
       const mongodbUri = getRequiredEnv('MONGODB_URI', {
-        errorMessage: 'MONGODB_URI is required when DATABASE=mongodb',
+        errorMessage: MONGODB_URI_REQUIRED_MESSAGE,
       });
       const { database, client } = createMongoDatabase(mongodbUri);
 

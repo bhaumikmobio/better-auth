@@ -7,6 +7,15 @@ export type ApiSuccessBody<T> = {
   data: T;
 };
 
+export type MessageDataResponse<T> = {
+  message: string;
+  data: T;
+};
+
+export type MessageOnlyResponse = {
+  message: string;
+};
+
 export function successResponse<T>(
   message: string,
   data: T,
@@ -17,3 +26,15 @@ export function successResponse<T>(
     data,
   };
 }
+
+export const messageDataResponse = <T>(
+  message: string,
+  data: T,
+): MessageDataResponse<T> => ({
+  message,
+  data,
+});
+
+export const messageOnlyResponse = (message: string): MessageOnlyResponse => ({
+  message,
+});

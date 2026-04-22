@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { UNKNOWN_USER_NAME } from '../../common/constants/app.constants';
 import type {
   ChatbotSource,
   StandupIndexSource,
@@ -293,7 +294,7 @@ export class ChatbotHelper {
   private resolveUserLabel(
     item: Pick<StandupIndexSource, 'userName' | 'userId'>,
   ): string {
-    return item.userName?.trim() || item.userId || 'Unknown user';
+    return item.userName?.trim() || item.userId || UNKNOWN_USER_NAME;
   }
 
   private formatLatestStandupResponse(latest: StandupIndexSource): string {

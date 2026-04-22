@@ -7,13 +7,18 @@ import {
   Patch,
   Post,
   Req,
-  UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
 import type { Request } from 'express';
+import { STANDUP_MESSAGES } from '../../common/constants/app.constants';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { AuthGuard } from '../../common/guards/auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
+import {
+  messageDataResponse,
+  messageOnlyResponse,
+} from '../../common/response/api-response.util';
+import { requireAuthenticatedUserId } from '../../common/utils/request-user.util';
 import type {
   CreateReactionDto,
   CreateStandupDto,
@@ -27,11 +32,7 @@ export class StandupController {
   constructor(private readonly standupService: StandupService) {}
 
   private requireUserId(request: Request): string {
-    const userId = request.user?.id;
-    if (!userId) {
-      throw new UnauthorizedException('Authentication required.');
-    }
-    return userId;
+    return requireAuthenticatedUserId(request);
   }
 
   @Post()
@@ -55,13 +56,10 @@ export class StandupController {
           : undefined,
     });
 
-    return {
-      message: 'Stand-up submitted successfully.',
-      data: {
-        id: standup.id,
-        createdAt: standup.createdAt,
-      },
-    };
+    return messageDataResponse(STANDUP_MESSAGES.SUBMITTED, {
+      id: standup.id,
+      createdAt: standup.createdAt,
+    });
   }
 
   @Get('feed')
@@ -69,20 +67,14 @@ export class StandupController {
     const userId = this.requireUserId(request);
 
     const feed = await this.standupService.getTodayFeed(userId);
-    return {
-      message: 'Stand-up feed fetched successfully.',
-      data: feed,
-    };
+    return messageDataResponse(STANDUP_MESSAGES.FEED_FETCHED, feed);
   }
 
   @Get('admin/summary')
   @Roles('admin')
   async getAdminSummary() {
     const summary = await this.standupService.getTodayAdminSummary();
-    return {
-      message: 'Today summary fetched successfully.',
-      data: summary,
-    };
+    return messageDataResponse(STANDUP_MESSAGES.SUMMARY_FETCHED, summary);
   }
 
   @Patch('admin/settings')
@@ -94,10 +86,7 @@ export class StandupController {
     );
     const settings = await this.standupService.updateSettings(dailyPrompt);
 
-    return {
-      message: 'Stand-up settings updated successfully.',
-      data: settings,
-    };
+    return messageDataResponse(STANDUP_MESSAGES.SETTINGS_UPDATED, settings);
   }
 
   @Post(':standupId/reactions')
@@ -114,9 +103,7 @@ export class StandupController {
       emoji: this.standupService.validateEmoji(body?.emoji),
     });
 
-    return {
-      message: 'Reaction added successfully.',
-    };
+    return messageOnlyResponse(STANDUP_MESSAGES.REACTION_ADDED);
   }
 
   @Delete(':standupId/reactions/:emoji')
@@ -133,8 +120,6 @@ export class StandupController {
       emoji: this.standupService.validateEmoji(emoji),
     });
 
-    return {
-      message: 'Reaction removed successfully.',
-    };
+    return messageOnlyResponse(STANDUP_MESSAGES.REACTION_REMOVED);
   }
 }

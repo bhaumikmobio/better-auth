@@ -1,15 +1,10 @@
-import {
-  Body,
-  Controller,
-  Param,
-  Post,
-  Req,
-  UnauthorizedException,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Param, Post, Req, UseGuards } from '@nestjs/common';
 import type { Request } from 'express';
+import { CHATBOT_MESSAGES } from '../../common/constants/app.constants';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { AuthGuard } from '../../common/guards/auth.guard';
+import { messageDataResponse } from '../../common/response/api-response.util';
+import { requireAuthenticatedUserId } from '../../common/utils/request-user.util';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import type { AskChatbotDto } from './dto/ask-chatbot.dto';
 import type { ReindexChatbotDto } from './dto/reindex-chatbot.dto';
@@ -22,10 +17,7 @@ export class ChatbotController {
 
   @Post('ask')
   async ask(@Body() body: AskChatbotDto, @Req() request: Request) {
-    const userId = request.user?.id;
-    if (!userId) {
-      throw new UnauthorizedException('Authentication required.');
-    }
+    requireAuthenticatedUserId(request);
 
     const result = await this.chatbotService.askQuestion({
       requesterName: request.user?.name ?? undefined,
@@ -33,10 +25,7 @@ export class ChatbotController {
       topK: this.chatbotService.validateTopK(body?.topK),
     });
 
-    return {
-      message: 'Chatbot answer generated successfully.',
-      data: result,
-    };
+    return messageDataResponse(CHATBOT_MESSAGES.ANSWER_GENERATED, result);
   }
 
   @Post('admin/reindex')
@@ -45,19 +34,13 @@ export class ChatbotController {
     const result = await this.chatbotService.reindexStandups(
       this.chatbotService.validateReindexLimit(body?.limit),
     );
-    return {
-      message: 'Vector index refreshed successfully.',
-      data: result,
-    };
+    return messageDataResponse(CHATBOT_MESSAGES.INDEX_REFRESHED, result);
   }
 
   @Post('admin/reindex/:standupId')
   @Roles('admin')
   async reindexOne(@Param('standupId') standupId: string) {
     const result = await this.chatbotService.reindexSingleStandup(standupId);
-    return {
-      message: 'Stand-up vector chunk refreshed successfully.',
-      data: result,
-    };
+    return messageDataResponse(CHATBOT_MESSAGES.CHUNK_REFRESHED, result);
   }
 }

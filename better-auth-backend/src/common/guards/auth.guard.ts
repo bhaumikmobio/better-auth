@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import type { Request } from 'express';
 import { fromNodeHeaders } from 'better-auth/node';
+import { AUTHENTICATION_REQUIRED_MESSAGE } from '../constants/app.constants';
 import type { AuthenticatedUser } from '../types/auth-user.type';
 import { auth } from '../../config/auth.config';
 
@@ -19,7 +20,7 @@ export class AuthGuard implements CanActivate {
     });
 
     if (!session?.user) {
-      throw new UnauthorizedException('Authentication required.');
+      throw new UnauthorizedException(AUTHENTICATION_REQUIRED_MESSAGE);
     }
 
     // Expose the full Better Auth user payload for downstream role checks.

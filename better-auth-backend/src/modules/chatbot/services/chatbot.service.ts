@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { resolveDatabaseProvider } from '../../../config/database.config';
 import { EmbeddingsService } from '../../../integrations/embeddings/embeddings.service';
+import { STANDUP_NOT_FOUND_MESSAGE } from '../../standup/standup.shared';
 import { MongoDbChatbotStore } from '../stores/chatbot.mongodb.store';
 import type {
   ChatbotAnswerResult,
@@ -133,7 +134,7 @@ export class ChatbotService {
     await this.mongodbStore.ensureVectorIndex();
     const source = await this.mongodbStore.findStandupForIndexing(standupId);
     if (!source) {
-      throw new NotFoundException('Stand-up entry not found.');
+      throw new NotFoundException(STANDUP_NOT_FOUND_MESSAGE);
     }
 
     return { indexed: await this.indexSingleStandup(source) };

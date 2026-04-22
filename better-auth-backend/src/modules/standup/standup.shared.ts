@@ -2,6 +2,9 @@ import type { DateRange, FeedReaction } from './standup.types';
 
 export const DEFAULT_PROMPT = 'What is your main goal today?';
 export const STANDUP_SETTINGS_DOC_ID = 'standup_settings';
+export const STANDUP_NOT_FOUND_MESSAGE = 'Stand-up entry not found.';
+export const STANDUP_REACTION_NOT_FOUND_MESSAGE =
+  'Reaction not found for this stand-up.';
 
 export const toTodayRange = (): DateRange => {
   const start = new Date();

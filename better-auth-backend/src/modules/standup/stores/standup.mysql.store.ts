@@ -5,6 +5,8 @@ import { getMysqlKysely } from '../../../database/kysely.service';
 import {
   DEFAULT_PROMPT,
   groupReactions,
+  STANDUP_NOT_FOUND_MESSAGE,
+  STANDUP_REACTION_NOT_FOUND_MESSAGE,
   toOptionalString,
   toTodayRange,
 } from '../standup.shared';
@@ -219,7 +221,7 @@ export class MysqlStandupStore implements StandupStore {
       .where('id', '=', args.standupId)
       .executeTakeFirst();
     if (!standup) {
-      throw new NotFoundException('Stand-up entry not found.');
+      throw new NotFoundException(STANDUP_NOT_FOUND_MESSAGE);
     }
 
     await db
@@ -248,7 +250,7 @@ export class MysqlStandupStore implements StandupStore {
       (deleted?.numDeletedRows as bigint | number | undefined) ?? 0,
     );
     if (deletedCount === 0) {
-      throw new NotFoundException('Reaction not found for this stand-up.');
+      throw new NotFoundException(STANDUP_REACTION_NOT_FOUND_MESSAGE);
     }
   }
 }

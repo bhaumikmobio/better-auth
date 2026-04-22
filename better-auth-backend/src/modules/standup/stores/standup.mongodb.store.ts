@@ -1,9 +1,15 @@
 import { ConflictException, NotFoundException } from '@nestjs/common';
 import { ObjectId, type Db } from 'mongodb';
+import {
+  MONGODB_URI_REQUIRED_MESSAGE,
+  UNKNOWN_USER_NAME,
+} from '../../../common/constants/app.constants';
 import { createMongoDatabase } from '../../../database/database.service';
 import {
   DEFAULT_PROMPT,
   groupReactions,
+  STANDUP_NOT_FOUND_MESSAGE,
+  STANDUP_REACTION_NOT_FOUND_MESSAGE,
   STANDUP_SETTINGS_DOC_ID,
   toOptionalString,
   toTodayRange,
@@ -59,7 +65,7 @@ export class MongoDbStandupStore implements StandupStore {
 
     const mongodbUri = process.env.MONGODB_URI;
     if (!mongodbUri) {
-      throw new Error('MONGODB_URI is required when DATABASE=mongodb');
+      throw new Error(MONGODB_URI_REQUIRED_MESSAGE);
     }
 
     const { database, client } = createMongoDatabase(mongodbUri);
@@ -106,7 +112,7 @@ export class MongoDbStandupStore implements StandupStore {
       const name =
         typeof user.name === 'string' && user.name.trim().length > 0
           ? user.name
-          : 'Unknown user';
+          : UNKNOWN_USER_NAME;
       const keyFromId = typeof user.id === 'string' ? user.id : null;
       const keyFromObjectId = this.normalizeStandupId(user._id);
       if (keyFromId) {
@@ -247,7 +253,7 @@ export class MongoDbStandupStore implements StandupStore {
         mood: standup.mood,
         user: {
           id: standup.userId,
-          name: userNameMap.get(standup.userId) ?? 'Unknown user',
+          name: userNameMap.get(standup.userId) ?? UNKNOWN_USER_NAME,
         },
         reactions: groupReactions(
           reactionsByStandupId.get(standup.id) ?? [],
@@ -313,7 +319,7 @@ export class MongoDbStandupStore implements StandupStore {
         createdAt: standup.createdAt,
         user: {
           id: standup.userId,
-          name: userNameMap.get(standup.userId) ?? 'Unknown user',
+          name: userNameMap.get(standup.userId) ?? UNKNOWN_USER_NAME,
         },
       })),
     };
@@ -347,14 +353,14 @@ export class MongoDbStandupStore implements StandupStore {
   async addReaction(args: AddReactionArgs): Promise<void> {
     const db = await this.getMongoDb();
     if (!ObjectId.isValid(args.standupId)) {
-      throw new NotFoundException('Stand-up entry not found.');
+      throw new NotFoundException(STANDUP_NOT_FOUND_MESSAGE);
     }
     const standupObjectId = new ObjectId(args.standupId);
     const standup = await db.collection<MongoStandupDoc>('standup').findOne({
       _id: standupObjectId,
     });
     if (!standup) {
-      throw new NotFoundException('Stand-up entry not found.');
+      throw new NotFoundException(STANDUP_NOT_FOUND_MESSAGE);
     }
 
     await db.collection<MongoReactionDoc>('reaction').updateOne(
@@ -382,7 +388,7 @@ export class MongoDbStandupStore implements StandupStore {
         emoji: args.emoji,
       });
     if (deleted.deletedCount === 0) {
-      throw new NotFoundException('Reaction not found for this stand-up.');
+      throw new NotFoundException(STANDUP_REACTION_NOT_FOUND_MESSAGE);
     }
   }
 }

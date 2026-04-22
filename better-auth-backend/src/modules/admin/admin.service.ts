@@ -7,6 +7,7 @@ import {
 import { fromNodeHeaders } from 'better-auth/node';
 import type { IncomingHttpHeaders } from 'node:http';
 import { ADMIN_MESSAGES } from '../../common/constants/admin.constants';
+import { UNKNOWN_USER_NAME } from '../../common/constants/app.constants';
 import type { AppRole } from '../../common/types/auth-user.type';
 import { auth } from '../../config/auth.config';
 import type { CreateAdminUserDto } from './dto/create-admin-user.dto';
@@ -43,7 +44,6 @@ type BetterAuthGetUserResult = {
   role?: unknown;
 };
 
-const FALLBACK_NAME = 'Unknown user';
 const FALLBACK_EMAIL = 'unknown@example.com';
 const ROLE_LOOKUP_PAGE_SIZE = 200;
 
@@ -112,7 +112,7 @@ const toAdminUserListItem = (value: unknown): AdminUserListItem | null => {
 
   return {
     id,
-    name: getStringValue(source, 'name', FALLBACK_NAME),
+    name: getStringValue(source, 'name', UNKNOWN_USER_NAME),
     email: getStringValue(source, 'email', FALLBACK_EMAIL),
     role: getStringValue(source, 'role', 'user'),
     status: toStatus(source),

@@ -1,4 +1,8 @@
 import { ObjectId, type Db, type Document } from 'mongodb';
+import {
+  MONGODB_URI_REQUIRED_MESSAGE,
+  UNKNOWN_USER_NAME,
+} from '../../../common/constants/app.constants';
 import { createMongoDatabase } from '../../../database/database.service';
 import {
   DEFAULT_PROMPT,
@@ -70,7 +74,7 @@ export class MongoDbChatbotStore implements ChatbotStore {
 
     const mongodbUri = process.env.MONGODB_URI;
     if (!mongodbUri) {
-      throw new Error('MONGODB_URI is required when DATABASE=mongodb');
+      throw new Error(MONGODB_URI_REQUIRED_MESSAGE);
     }
 
     const { database, client } = createMongoDatabase(mongodbUri);
@@ -103,7 +107,7 @@ export class MongoDbChatbotStore implements ChatbotStore {
     return {
       standupId: doc._id.toHexString(),
       userId: doc.userId,
-      userName: 'Unknown user',
+      userName: UNKNOWN_USER_NAME,
       createdAt: doc.createdAt instanceof Date ? doc.createdAt : new Date(),
       yesterday: typeof doc.yesterday === 'string' ? doc.yesterday : '',
       today: typeof doc.today === 'string' ? doc.today : '',
@@ -140,7 +144,7 @@ export class MongoDbChatbotStore implements ChatbotStore {
       const normalizedName =
         typeof user.name === 'string' && user.name.trim().length > 0
           ? user.name.trim()
-          : 'Unknown user';
+          : UNKNOWN_USER_NAME;
       const idKey =
         typeof user.id === 'string' && user.id.trim() ? user.id : null;
       const objectIdKey =
@@ -234,7 +238,7 @@ export class MongoDbChatbotStore implements ChatbotStore {
 
     return standups.map((entry) => ({
       ...entry,
-      userName: userNameMap.get(entry.userId) ?? 'Unknown user',
+      userName: userNameMap.get(entry.userId) ?? UNKNOWN_USER_NAME,
     }));
   }
 
@@ -260,7 +264,7 @@ export class MongoDbChatbotStore implements ChatbotStore {
     const userNameMap = await this.getMongoUserNameMap([standup.userId]);
     return {
       ...standup,
-      userName: userNameMap.get(standup.userId) ?? 'Unknown user',
+      userName: userNameMap.get(standup.userId) ?? UNKNOWN_USER_NAME,
     };
   }
 

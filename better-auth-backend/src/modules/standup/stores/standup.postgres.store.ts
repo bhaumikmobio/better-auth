@@ -3,6 +3,8 @@ import type { PrismaService } from '../../../database/prisma/prisma.service';
 import {
   DEFAULT_PROMPT,
   groupReactions,
+  STANDUP_NOT_FOUND_MESSAGE,
+  STANDUP_REACTION_NOT_FOUND_MESSAGE,
   toOptionalString,
   toTodayRange,
 } from '../standup.shared';
@@ -181,7 +183,7 @@ export class PostgresStandupStore implements StandupStore {
     });
 
     if (!standup) {
-      throw new NotFoundException('Stand-up entry not found.');
+      throw new NotFoundException(STANDUP_NOT_FOUND_MESSAGE);
     }
 
     await this.prisma.reaction.upsert({
@@ -211,7 +213,7 @@ export class PostgresStandupStore implements StandupStore {
     });
 
     if (deleted.count === 0) {
-      throw new NotFoundException('Reaction not found for this stand-up.');
+      throw new NotFoundException(STANDUP_REACTION_NOT_FOUND_MESSAGE);
     }
   }
 }
