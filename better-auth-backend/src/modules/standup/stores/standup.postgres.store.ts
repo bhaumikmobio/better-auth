@@ -1,8 +1,10 @@
 import { ConflictException, NotFoundException } from '@nestjs/common';
-import type { PrismaService } from '../../../database/prisma.service';
+import type { PrismaService } from '../../../database/prisma/prisma.service';
 import {
   DEFAULT_PROMPT,
   groupReactions,
+  STANDUP_NOT_FOUND_MESSAGE,
+  STANDUP_REACTION_NOT_FOUND_MESSAGE,
   toOptionalString,
   toTodayRange,
 } from '../standup.shared';
@@ -12,6 +14,8 @@ import type {
   SettingsResult,
   StandupCreateResult,
   StandupFeedResult,
+  StandupHistoryFilters,
+  StandupHistoryResult,
   SubmitStandupArgs,
   RemoveReactionArgs,
   StandupStore,
@@ -112,6 +116,72 @@ export class PostgresStandupStore implements StandupStore {
     };
   }
 
+  async getHistoryFeed(
+    currentUserId: string,
+    query: StandupHistoryFilters,
+  ): Promise<StandupHistoryResult> {
+    const fromDate = new Date(query.from);
+    const toDate = new Date(query.to);
+    const [standups, total] = await Promise.all([
+      this.prisma.standup.findMany({
+        where: {
+          createdAt: {
+            gte: fromDate,
+            lt: toDate,
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+        skip: query.offset,
+        take: query.limit,
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+          reactions: {
+            select: {
+              emoji: true,
+              userId: true,
+            },
+          },
+        },
+      }),
+      this.prisma.standup.count({
+        where: {
+          createdAt: {
+            gte: fromDate,
+            lt: toDate,
+          },
+        },
+      }),
+    ]);
+
+    return {
+      standups: standups.map((standup) => ({
+        id: standup.id,
+        createdAt: standup.createdAt,
+        yesterday: standup.yesterday,
+        today: standup.today,
+        blockers: standup.blockers,
+        mood: standup.mood,
+        user: {
+          id: standup.user.id,
+          name: standup.user.name,
+        },
+        reactions: groupReactions(standup.reactions, currentUserId),
+      })),
+      filters: {
+        from: query.from,
+        to: query.to,
+        limit: query.limit,
+        offset: query.offset,
+        total,
+      },
+    };
+  }
+
   async getTodayAdminSummary(): Promise<AdminSummary> {
     const todayRange = toTodayRange();
     const [totalCount, standups] = await Promise.all([
@@ -181,7 +251,7 @@ export class PostgresStandupStore implements StandupStore {
     });
 
     if (!standup) {
-      throw new NotFoundException('Stand-up entry not found.');
+      throw new NotFoundException(STANDUP_NOT_FOUND_MESSAGE);
     }
 
     await this.prisma.reaction.upsert({
@@ -211,7 +281,7 @@ export class PostgresStandupStore implements StandupStore {
     });
 
     if (deleted.count === 0) {
-      throw new NotFoundException('Reaction not found for this stand-up.');
+      throw new NotFoundException(STANDUP_REACTION_NOT_FOUND_MESSAGE);
     }
   }
 }

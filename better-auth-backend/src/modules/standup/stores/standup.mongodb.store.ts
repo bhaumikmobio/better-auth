@@ -1,9 +1,15 @@
 import { ConflictException, NotFoundException } from '@nestjs/common';
-import { ObjectId, type Db, type MongoClient } from 'mongodb';
-import { createMongoDatabase } from '../../../database/database-provider';
+import { ObjectId, type Db } from 'mongodb';
+import {
+  MONGODB_URI_REQUIRED_MESSAGE,
+  UNKNOWN_USER_NAME,
+} from '../../../common/constants/app.constants';
+import { createMongoDatabase } from '../../../database/database.service';
 import {
   DEFAULT_PROMPT,
   groupReactions,
+  STANDUP_NOT_FOUND_MESSAGE,
+  STANDUP_REACTION_NOT_FOUND_MESSAGE,
   STANDUP_SETTINGS_DOC_ID,
   toOptionalString,
   toTodayRange,
@@ -15,6 +21,8 @@ import type {
   SettingsResult,
   StandupCreateResult,
   StandupFeedResult,
+  StandupHistoryFilters,
+  StandupHistoryResult,
   StandupStore,
   SubmitStandupArgs,
 } from '../standup.types';
@@ -50,7 +58,6 @@ type MongoSettingsDoc = {
 };
 
 export class MongoDbStandupStore implements StandupStore {
-  private mongoClient: MongoClient | null = null;
   private mongoDb: Db | null = null;
 
   private async getMongoDb(): Promise<Db> {
@@ -60,14 +67,12 @@ export class MongoDbStandupStore implements StandupStore {
 
     const mongodbUri = process.env.MONGODB_URI;
     if (!mongodbUri) {
-      throw new Error('MONGODB_URI is required when DATABASE=mongodb');
+      throw new Error(MONGODB_URI_REQUIRED_MESSAGE);
     }
 
     const { database, client } = createMongoDatabase(mongodbUri);
-    const mongoClient = client as MongoClient;
-    await mongoClient.connect();
-    this.mongoClient = mongoClient;
-    this.mongoDb = database as Db;
+    await client.connect();
+    this.mongoDb = database;
     return this.mongoDb;
   }
 
@@ -109,7 +114,7 @@ export class MongoDbStandupStore implements StandupStore {
       const name =
         typeof user.name === 'string' && user.name.trim().length > 0
           ? user.name
-          : 'Unknown user';
+          : UNKNOWN_USER_NAME;
       const keyFromId = typeof user.id === 'string' ? user.id : null;
       const keyFromObjectId = this.normalizeStandupId(user._id);
       if (keyFromId) {
@@ -250,13 +255,118 @@ export class MongoDbStandupStore implements StandupStore {
         mood: standup.mood,
         user: {
           id: standup.userId,
-          name: userNameMap.get(standup.userId) ?? 'Unknown user',
+          name: userNameMap.get(standup.userId) ?? UNKNOWN_USER_NAME,
         },
         reactions: groupReactions(
           reactionsByStandupId.get(standup.id) ?? [],
           currentUserId,
         ),
       })),
+    };
+  }
+
+  async getHistoryFeed(
+    currentUserId: string,
+    query: StandupHistoryFilters,
+  ): Promise<StandupHistoryResult> {
+    const db = await this.getMongoDb();
+    const fromDate = new Date(query.from);
+    const toDate = new Date(query.to);
+    const [standups, total] = await Promise.all([
+      db
+        .collection<MongoStandupDoc>('standup')
+        .find({
+          createdAt: {
+            $gte: fromDate,
+            $lt: toDate,
+          },
+        })
+        .sort({ createdAt: -1 })
+        .skip(query.offset)
+        .limit(query.limit)
+        .toArray(),
+      db.collection<MongoStandupDoc>('standup').countDocuments({
+        createdAt: {
+          $gte: fromDate,
+          $lt: toDate,
+        },
+      }),
+    ]);
+
+    const standupEntries = standups
+      .map((item) => {
+        const id = this.normalizeStandupId(item._id);
+        if (!id || typeof item.userId !== 'string') {
+          return null;
+        }
+        return {
+          id,
+          userId: item.userId,
+          createdAt:
+            item.createdAt instanceof Date
+              ? item.createdAt
+              : new Date(item.createdAt),
+          yesterday: typeof item.yesterday === 'string' ? item.yesterday : '',
+          today: typeof item.today === 'string' ? item.today : '',
+          blockers: typeof item.blockers === 'string' ? item.blockers : '',
+          mood: typeof item.mood === 'string' ? item.mood : null,
+        };
+      })
+      .filter((item): item is NonNullable<typeof item> => item !== null);
+
+    const [userNameMap, reactions] = await Promise.all([
+      this.getMongoUserNameMap(standupEntries.map((item) => item.userId)),
+      standupEntries.length > 0
+        ? db
+            .collection<MongoReactionDoc>('reaction')
+            .find({
+              standupId: { $in: standupEntries.map((item) => item.id) },
+            })
+            .toArray()
+        : Promise.resolve([]),
+    ]);
+
+    const reactionsByStandupId = new Map<
+      string,
+      Array<{ emoji: string; userId: string }>
+    >();
+    for (const reaction of reactions) {
+      if (
+        typeof reaction.standupId !== 'string' ||
+        typeof reaction.emoji !== 'string' ||
+        typeof reaction.userId !== 'string'
+      ) {
+        continue;
+      }
+      const list = reactionsByStandupId.get(reaction.standupId) ?? [];
+      list.push({ emoji: reaction.emoji, userId: reaction.userId });
+      reactionsByStandupId.set(reaction.standupId, list);
+    }
+
+    return {
+      standups: standupEntries.map((standup) => ({
+        id: standup.id,
+        createdAt: standup.createdAt,
+        yesterday: standup.yesterday,
+        today: standup.today,
+        blockers: standup.blockers,
+        mood: standup.mood,
+        user: {
+          id: standup.userId,
+          name: userNameMap.get(standup.userId) ?? UNKNOWN_USER_NAME,
+        },
+        reactions: groupReactions(
+          reactionsByStandupId.get(standup.id) ?? [],
+          currentUserId,
+        ),
+      })),
+      filters: {
+        from: query.from,
+        to: query.to,
+        limit: query.limit,
+        offset: query.offset,
+        total,
+      },
     };
   }
 
@@ -316,7 +426,7 @@ export class MongoDbStandupStore implements StandupStore {
         createdAt: standup.createdAt,
         user: {
           id: standup.userId,
-          name: userNameMap.get(standup.userId) ?? 'Unknown user',
+          name: userNameMap.get(standup.userId) ?? UNKNOWN_USER_NAME,
         },
       })),
     };
@@ -350,14 +460,14 @@ export class MongoDbStandupStore implements StandupStore {
   async addReaction(args: AddReactionArgs): Promise<void> {
     const db = await this.getMongoDb();
     if (!ObjectId.isValid(args.standupId)) {
-      throw new NotFoundException('Stand-up entry not found.');
+      throw new NotFoundException(STANDUP_NOT_FOUND_MESSAGE);
     }
     const standupObjectId = new ObjectId(args.standupId);
     const standup = await db.collection<MongoStandupDoc>('standup').findOne({
       _id: standupObjectId,
     });
     if (!standup) {
-      throw new NotFoundException('Stand-up entry not found.');
+      throw new NotFoundException(STANDUP_NOT_FOUND_MESSAGE);
     }
 
     await db.collection<MongoReactionDoc>('reaction').updateOne(
@@ -385,7 +495,7 @@ export class MongoDbStandupStore implements StandupStore {
         emoji: args.emoji,
       });
     if (deleted.deletedCount === 0) {
-      throw new NotFoundException('Reaction not found for this stand-up.');
+      throw new NotFoundException(STANDUP_REACTION_NOT_FOUND_MESSAGE);
     }
   }
 }

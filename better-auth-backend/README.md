@@ -32,12 +32,18 @@ Configure these environment variables before starting the backend:
 - `DATABASE` (`postgres`, `mongodb`, or `mysql`)
 - `POSTGRES_URL` (required when `DATABASE=postgres`)
 - `MONGODB_URI` (required when `DATABASE=mongodb`, example: `mongodb://localhost:27017/betterAuth`)
+- `MONGODB_DB_NAME` (optional explicit DB selection when `DATABASE=mongodb`)
 - `DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `DB_PORT` (required when `DATABASE=mysql`)
 - `BETTER_AUTH_SECRET`
 - `BETTER_AUTH_URL` (example: `http://localhost:3001`)
 - `FRONTEND_URL` (example: `http://localhost:3000`)
 - `GOOGLE_CLIENT_ID`
 - `GOOGLE_CLIENT_SECRET`
+- `OLLAMA_BASE_URL` (default: `http://localhost:11434`)
+- `OLLAMA_CHAT_MODEL` (default: `llama3`)
+- `OLLAMA_EMBED_MODEL` (default: `nomic-embed-text`)
+- `OLLAMA_EMBED_DIMENSIONS` (default: `768`)
+- `MONGODB_VECTOR_INDEX` (default: `standup_chunks_vector_index`)
 
 Google Cloud Console must include this redirect URI:
 
@@ -46,6 +52,21 @@ Google Cloud Console must include this redirect URI:
 Example for local development:
 
 - `http://localhost:3001/auth/callback/google`
+
+## MongoDB vector chatbot setup
+
+This project includes a protected chatbot endpoint that performs RAG over standup entries using MongoDB Atlas Vector Search and Ollama.
+
+1. Ensure `DATABASE=mongodb` and point `MONGODB_URI` to an Atlas cluster that supports Vector Search.
+2. Pull Ollama models locally:
+   - `ollama pull llama3`
+   - `ollama pull nomic-embed-text`
+3. Trigger initial indexing from an admin session:
+   - `POST /chatbot/admin/reindex`
+4. Ask questions from authenticated clients:
+   - `POST /chatbot/ask`
+
+If the vector index does not already exist, the backend attempts to create it on reindex.
 
 ## Project setup
 

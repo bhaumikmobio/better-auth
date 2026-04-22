@@ -160,6 +160,11 @@ export const STANDUP_COPY = {
   description: "Share progress, next steps, and blockers with your team.",
 } as const;
 
+export const STANDUP_HISTORY_COPY = {
+  title: "Standup history",
+  description: "Browse date-wise stand-up updates across previous days.",
+} as const;
+
 export const ADMIN_COPY = {
   overviewTitle: "Admin overview",
   usersTitle: "User management",

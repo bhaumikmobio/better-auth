@@ -68,10 +68,35 @@ export type StandupFeedResult = {
   standups: FeedStandup[];
 };
 
+export type StandupHistoryQuery = {
+  from?: string;
+  to?: string;
+  limit?: number;
+  offset?: number;
+};
+
+export type StandupHistoryFilters = {
+  from: string;
+  to: string;
+  limit: number;
+  offset: number;
+};
+
+export type StandupHistoryResult = {
+  standups: FeedStandup[];
+  filters: StandupHistoryFilters & {
+    total: number;
+  };
+};
+
 export interface StandupStore {
   submitStandup(args: SubmitStandupArgs): Promise<StandupCreateResult>;
   getDailyPrompt(): Promise<string>;
   getTodayFeed(currentUserId: string): Promise<StandupFeedResult>;
+  getHistoryFeed(
+    currentUserId: string,
+    query: StandupHistoryFilters,
+  ): Promise<StandupHistoryResult>;
   getTodayAdminSummary(): Promise<AdminSummary>;
   updateSettings(dailyPrompt: string): Promise<SettingsResult>;
   addReaction(args: AddReactionArgs): Promise<void>;

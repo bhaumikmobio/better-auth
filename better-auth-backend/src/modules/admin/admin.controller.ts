@@ -17,16 +17,16 @@ import {
   ADMIN_MESSAGES,
   ADMIN_PASSWORD_MIN_LENGTH,
   ADMIN_USER_LIST_QUERY,
-} from '../common/constants/admin.constants';
-import { Roles } from '../common/decorators/roles.decorator';
-import { AuthGuard } from '../common/guards/auth.guard';
-import { RolesGuard } from '../common/guards/roles.guard';
-import { successResponse } from '../common/response/api-response.util';
-import { APP_ROLES, type AppRole } from '../common/types/auth-user.type';
+} from '../../common/constants/admin.constants';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { AuthGuard } from '../../common/guards/auth.guard';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { successResponse } from '../../common/response/api-response.util';
+import { APP_ROLES, type AppRole } from '../../common/types/auth-user.type';
 import {
   STATUS_CODE_CREATED,
   STATUS_CODE_SUCCESS,
-} from '../common/utils/http-status.util';
+} from '../../common/utils/http-status.util';
 import type { CreateAdminUserDto } from './dto/create-admin-user.dto';
 import type { UpdateAdminUserDto } from './dto/update-admin-user.dto';
 import { AdminService } from './admin.service';

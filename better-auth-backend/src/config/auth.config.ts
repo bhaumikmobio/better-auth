@@ -1,14 +1,15 @@
-import { mongodbAdapter } from 'better-auth/adapters/mongodb';
 import { prismaAdapter } from '@better-auth/prisma-adapter';
+import { mongodbAdapter } from 'better-auth/adapters/mongodb';
 import { betterAuth } from 'better-auth';
 import { admin } from 'better-auth/plugins';
+import { MONGODB_URI_REQUIRED_MESSAGE } from '../common/constants/app.constants';
+import { getRequiredEnv } from '../common/utils/env.util';
 import {
   createMongoDatabase,
   resolveDatabaseProvider,
-} from '../../database/database-provider';
-import { getRequiredEnv } from '../../database/common.util';
-import { getMysqlKysely } from '../../database/kysely.service';
-import { getPrismaClient } from '../../database/prisma.service';
+} from '../database/database.service';
+import { getMysqlKysely } from '../database/kysely.service';
+import { getPrismaClient } from '../database/prisma/prisma.service';
 
 const authSecret = getRequiredEnv('BETTER_AUTH_SECRET');
 
@@ -33,7 +34,7 @@ const getDatabaseAdapter = (): unknown => {
       };
     default: {
       const mongodbUri = getRequiredEnv('MONGODB_URI', {
-        errorMessage: 'MONGODB_URI is required when DATABASE=mongodb',
+        errorMessage: MONGODB_URI_REQUIRED_MESSAGE,
       });
       const { database, client } = createMongoDatabase(mongodbUri);
 
@@ -71,8 +72,6 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     sendResetPassword: ({ user, url }) => {
-      // Email sending is intentionally not implemented yet will be implemented in the future.
-      // This log confirms reset flow and provides the URL in development.
       console.info(
         `Password reset requested for ${user.email}. Reset URL: ${url}`,
       );
@@ -84,7 +83,6 @@ export const auth = betterAuth({
     },
   },
   plugins: [
-    // Minimal RBAC setup for user/admin role-based routing.
     admin({
       defaultRole: 'user',
     }),

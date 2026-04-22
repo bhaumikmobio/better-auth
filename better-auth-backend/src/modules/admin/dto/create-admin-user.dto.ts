@@ -1,4 +1,4 @@
-import type { AppRole } from '../../common/types/auth-user.type';
+import type { AppRole } from '../../../common/types/auth-user.type';
 
 export type CreateAdminUserDto = {
   name: string;

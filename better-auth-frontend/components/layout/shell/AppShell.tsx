@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
+import { ChatbotPanel } from "@/components/chatbot/ChatbotPanel";
 import { ROUTES } from "@/constants/routes";
 import { authClient } from "@/lib/auth-client";
 import { AppFooter } from "./AppFooter";
@@ -43,10 +44,12 @@ export function AppShell({
           { href: ROUTES.adminOverview, label: "Overview" },
           { href: ROUTES.adminUsers, label: "Users" },
           { href: ROUTES.adminStandup, label: "Stand-up" },
+          { href: ROUTES.standupHistory, label: "Standup History" },
         ]
       : [
           { href: ROUTES.dashboard, label: "Dashboard" },
           { href: ROUTES.standup, label: "Stand-up" },
+          { href: ROUTES.standupHistory, label: "Standup History" },
         ]),
     { href: ROUTES.profile, label: "Profile" },
     { href: ROUTES.changePassword, label: "Change Password" },
@@ -67,7 +70,11 @@ export function AppShell({
 
   return (
     <div className="flex h-dvh max-h-dvh w-full flex-col overflow-hidden md:flex-row">
-      <AppSidebar navItems={navItems} isSigningOut={isSigningOut} onLogout={handleLogout} />
+      <AppSidebar
+        navItems={navItems}
+        isSigningOut={isSigningOut}
+        onLogout={handleLogout}
+      />
 
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
         <AppHeader title={title} description={description} user={user} />
@@ -84,6 +91,8 @@ export function AppShell({
 
         <AppFooter user={user} />
       </div>
+
+      <ChatbotPanel />
     </div>
   );
 }

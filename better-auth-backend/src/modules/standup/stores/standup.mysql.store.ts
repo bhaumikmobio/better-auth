@@ -5,6 +5,8 @@ import { getMysqlKysely } from '../../../database/kysely.service';
 import {
   DEFAULT_PROMPT,
   groupReactions,
+  STANDUP_NOT_FOUND_MESSAGE,
+  STANDUP_REACTION_NOT_FOUND_MESSAGE,
   toOptionalString,
   toTodayRange,
 } from '../standup.shared';
@@ -15,14 +17,20 @@ import type {
   SettingsResult,
   StandupCreateResult,
   StandupFeedResult,
+  StandupHistoryFilters,
+  StandupHistoryResult,
   StandupStore,
   SubmitStandupArgs,
 } from '../standup.types';
 
 export class MysqlStandupStore implements StandupStore {
+  private getDb(): any {
+    return getMysqlKysely() as any;
+  }
+
   async submitStandup(args: SubmitStandupArgs): Promise<StandupCreateResult> {
     const todayRange = toTodayRange();
-    const db = getMysqlKysely() as any;
+    const db = this.getDb();
     const existingToday = await db
       .selectFrom('standup')
       .select('id')
@@ -56,7 +64,7 @@ export class MysqlStandupStore implements StandupStore {
   }
 
   async getDailyPrompt(): Promise<string> {
-    const db = getMysqlKysely() as any;
+    const db = this.getDb();
     const settings = await db
       .selectFrom('system_settings')
       .select('dailyPrompt')
@@ -66,7 +74,7 @@ export class MysqlStandupStore implements StandupStore {
   }
 
   async getTodayFeed(currentUserId: string): Promise<StandupFeedResult> {
-    const db = getMysqlKysely() as any;
+    const db = this.getDb();
     const todayRange = toTodayRange();
     const [dailyPrompt, standups] = await Promise.all([
       this.getDailyPrompt(),
@@ -137,8 +145,94 @@ export class MysqlStandupStore implements StandupStore {
     };
   }
 
+  async getHistoryFeed(
+    currentUserId: string,
+    query: StandupHistoryFilters,
+  ): Promise<StandupHistoryResult> {
+    const db = this.getDb();
+    const fromDate = new Date(query.from);
+    const toDate = new Date(query.to);
+    const [standups, countRow] = await Promise.all([
+      db
+        .selectFrom('standup as s')
+        .innerJoin('user as u', 'u.id', 's.userId')
+        .select([
+          's.id as id',
+          's.createdAt as createdAt',
+          's.yesterday as yesterday',
+          's.today as today',
+          's.blockers as blockers',
+          's.mood as mood',
+          'u.id as userId',
+          'u.name as userName',
+        ])
+        .where('s.createdAt', '>=', fromDate)
+        .where('s.createdAt', '<', toDate)
+        .orderBy('s.createdAt', 'desc')
+        .limit(query.limit)
+        .offset(query.offset)
+        .execute(),
+      db
+        .selectFrom('standup')
+        .select((eb: any) => eb.fn.count('id').as('count'))
+        .where('createdAt', '>=', fromDate)
+        .where('createdAt', '<', toDate)
+        .executeTakeFirst(),
+    ]);
+
+    const standupIds = standups.map((standup: any) => standup.id);
+    const reactions =
+      standupIds.length > 0
+        ? await db
+            .selectFrom('reaction')
+            .select(['standupId', 'emoji', 'userId'])
+            .where('standupId', 'in', standupIds)
+            .execute()
+        : [];
+
+    const reactionsByStandupId = new Map<
+      string,
+      Array<{ emoji: string; userId: string }>
+    >();
+    for (const reaction of reactions as Array<{
+      standupId: string;
+      emoji: string;
+      userId: string;
+    }>) {
+      const list = reactionsByStandupId.get(reaction.standupId) ?? [];
+      list.push({ emoji: reaction.emoji, userId: reaction.userId });
+      reactionsByStandupId.set(reaction.standupId, list);
+    }
+
+    return {
+      standups: standups.map((standup: any) => ({
+        id: standup.id,
+        createdAt: new Date(standup.createdAt),
+        yesterday: standup.yesterday,
+        today: standup.today,
+        blockers: standup.blockers,
+        mood: standup.mood,
+        user: {
+          id: standup.userId,
+          name: standup.userName,
+        },
+        reactions: groupReactions(
+          reactionsByStandupId.get(standup.id) ?? [],
+          currentUserId,
+        ),
+      })),
+      filters: {
+        from: query.from,
+        to: query.to,
+        limit: query.limit,
+        offset: query.offset,
+        total: Number(countRow?.count ?? 0),
+      },
+    };
+  }
+
   async getTodayAdminSummary(): Promise<AdminSummary> {
-    const db = getMysqlKysely() as any;
+    const db = this.getDb();
     const todayRange = toTodayRange();
     const [countRow, standups] = await Promise.all([
       db
@@ -179,7 +273,7 @@ export class MysqlStandupStore implements StandupStore {
   }
 
   async updateSettings(dailyPrompt: string): Promise<SettingsResult> {
-    const db = getMysqlKysely() as any;
+    const db = this.getDb();
     const now = new Date();
     await db
       .insertInto('system_settings')
@@ -208,14 +302,14 @@ export class MysqlStandupStore implements StandupStore {
   }
 
   async addReaction(args: AddReactionArgs): Promise<void> {
-    const db = getMysqlKysely() as any;
+    const db = this.getDb();
     const standup = await db
       .selectFrom('standup')
       .select('id')
       .where('id', '=', args.standupId)
       .executeTakeFirst();
     if (!standup) {
-      throw new NotFoundException('Stand-up entry not found.');
+      throw new NotFoundException(STANDUP_NOT_FOUND_MESSAGE);
     }
 
     await db
@@ -232,7 +326,7 @@ export class MysqlStandupStore implements StandupStore {
   }
 
   async removeReaction(args: RemoveReactionArgs): Promise<void> {
-    const db = getMysqlKysely() as any;
+    const db = this.getDb();
     const deleted = await db
       .deleteFrom('reaction')
       .where('standupId', '=', args.standupId)
@@ -244,7 +338,7 @@ export class MysqlStandupStore implements StandupStore {
       (deleted?.numDeletedRows as bigint | number | undefined) ?? 0,
     );
     if (deletedCount === 0) {
-      throw new NotFoundException('Reaction not found for this stand-up.');
+      throw new NotFoundException(STANDUP_REACTION_NOT_FOUND_MESSAGE);
     }
   }
 }
