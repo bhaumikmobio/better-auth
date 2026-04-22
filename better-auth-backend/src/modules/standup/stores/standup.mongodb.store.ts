@@ -1,6 +1,6 @@
 import { ConflictException, NotFoundException } from '@nestjs/common';
-import { ObjectId, type Db, type MongoClient } from 'mongodb';
-import { createMongoDatabase } from '../../../database/database-provider';
+import { ObjectId, type Db } from 'mongodb';
+import { createMongoDatabase } from '../../../database/database.service';
 import {
   DEFAULT_PROMPT,
   groupReactions,
@@ -50,7 +50,6 @@ type MongoSettingsDoc = {
 };
 
 export class MongoDbStandupStore implements StandupStore {
-  private mongoClient: MongoClient | null = null;
   private mongoDb: Db | null = null;
 
   private async getMongoDb(): Promise<Db> {
@@ -64,10 +63,8 @@ export class MongoDbStandupStore implements StandupStore {
     }
 
     const { database, client } = createMongoDatabase(mongodbUri);
-    const mongoClient = client as MongoClient;
-    await mongoClient.connect();
-    this.mongoClient = mongoClient;
-    this.mongoDb = database as Db;
+    await client.connect();
+    this.mongoDb = database;
     return this.mongoDb;
   }
 

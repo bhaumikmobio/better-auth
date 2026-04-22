@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { resolveDatabaseProvider } from '../../database/database-provider';
+import { resolveDatabaseProvider } from '../../database/database.service';
 import { PrismaService } from '../../database/prisma/prisma.service';
 import { MongoDbStandupStore } from './stores/standup.mongodb.store';
 import { MysqlStandupStore } from './stores/standup.mysql.store';
@@ -13,52 +13,49 @@ import type {
 
 @Injectable()
 export class StandupService {
-  private readonly postgresStore: PostgresStandupStore;
-  private readonly mysqlStore = new MysqlStandupStore();
-  private readonly mongodbStore = new MongoDbStandupStore();
-  private readonly databaseProvider = resolveDatabaseProvider();
+  private readonly store: StandupStore;
 
-  constructor(private readonly prisma: PrismaService) {
-    this.postgresStore = new PostgresStandupStore(prisma);
-  }
-
-  private getStore(): StandupStore {
-    switch (this.databaseProvider) {
+  constructor(prisma: PrismaService) {
+    const provider = resolveDatabaseProvider();
+    switch (provider) {
       case 'postgres':
-        return this.postgresStore;
+        this.store = new PostgresStandupStore(prisma);
+        break;
       case 'mysql':
-        return this.mysqlStore;
+        this.store = new MysqlStandupStore();
+        break;
       case 'mongodb':
-        return this.mongodbStore;
+        this.store = new MongoDbStandupStore();
+        break;
     }
   }
 
   async submitStandup(args: SubmitStandupArgs) {
-    return this.getStore().submitStandup(args);
+    return this.store.submitStandup(args);
   }
 
   async getDailyPrompt() {
-    return this.getStore().getDailyPrompt();
+    return this.store.getDailyPrompt();
   }
 
   async getTodayFeed(currentUserId: string) {
-    return this.getStore().getTodayFeed(currentUserId);
+    return this.store.getTodayFeed(currentUserId);
   }
 
   async getTodayAdminSummary() {
-    return this.getStore().getTodayAdminSummary();
+    return this.store.getTodayAdminSummary();
   }
 
   async updateSettings(dailyPrompt: string) {
-    return this.getStore().updateSettings(dailyPrompt);
+    return this.store.updateSettings(dailyPrompt);
   }
 
   async addReaction(args: AddReactionArgs) {
-    return this.getStore().addReaction(args);
+    return this.store.addReaction(args);
   }
 
   async removeReaction(args: RemoveReactionArgs) {
-    return this.getStore().removeReaction(args);
+    return this.store.removeReaction(args);
   }
 
   validateTextField(value: unknown, fieldName: string): string {

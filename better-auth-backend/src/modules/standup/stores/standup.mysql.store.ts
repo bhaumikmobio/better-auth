@@ -20,9 +20,13 @@ import type {
 } from '../standup.types';
 
 export class MysqlStandupStore implements StandupStore {
+  private getDb(): any {
+    return getMysqlKysely() as any;
+  }
+
   async submitStandup(args: SubmitStandupArgs): Promise<StandupCreateResult> {
     const todayRange = toTodayRange();
-    const db = getMysqlKysely() as any;
+    const db = this.getDb();
     const existingToday = await db
       .selectFrom('standup')
       .select('id')
@@ -56,7 +60,7 @@ export class MysqlStandupStore implements StandupStore {
   }
 
   async getDailyPrompt(): Promise<string> {
-    const db = getMysqlKysely() as any;
+    const db = this.getDb();
     const settings = await db
       .selectFrom('system_settings')
       .select('dailyPrompt')
@@ -66,7 +70,7 @@ export class MysqlStandupStore implements StandupStore {
   }
 
   async getTodayFeed(currentUserId: string): Promise<StandupFeedResult> {
-    const db = getMysqlKysely() as any;
+    const db = this.getDb();
     const todayRange = toTodayRange();
     const [dailyPrompt, standups] = await Promise.all([
       this.getDailyPrompt(),
@@ -138,7 +142,7 @@ export class MysqlStandupStore implements StandupStore {
   }
 
   async getTodayAdminSummary(): Promise<AdminSummary> {
-    const db = getMysqlKysely() as any;
+    const db = this.getDb();
     const todayRange = toTodayRange();
     const [countRow, standups] = await Promise.all([
       db
@@ -179,7 +183,7 @@ export class MysqlStandupStore implements StandupStore {
   }
 
   async updateSettings(dailyPrompt: string): Promise<SettingsResult> {
-    const db = getMysqlKysely() as any;
+    const db = this.getDb();
     const now = new Date();
     await db
       .insertInto('system_settings')
@@ -208,7 +212,7 @@ export class MysqlStandupStore implements StandupStore {
   }
 
   async addReaction(args: AddReactionArgs): Promise<void> {
-    const db = getMysqlKysely() as any;
+    const db = this.getDb();
     const standup = await db
       .selectFrom('standup')
       .select('id')
@@ -232,7 +236,7 @@ export class MysqlStandupStore implements StandupStore {
   }
 
   async removeReaction(args: RemoveReactionArgs): Promise<void> {
-    const db = getMysqlKysely() as any;
+    const db = this.getDb();
     const deleted = await db
       .deleteFrom('reaction')
       .where('standupId', '=', args.standupId)

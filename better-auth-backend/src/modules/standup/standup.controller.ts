@@ -14,9 +14,11 @@ import type { Request } from 'express';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { AuthGuard } from '../../common/guards/auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
-import type { CreateReactionDto } from './dto/create-reaction.dto';
-import type { CreateStandupDto } from './dto/create-standup.dto';
-import type { UpdateStandupSettingsDto } from './dto/update-standup-settings.dto';
+import type {
+  CreateReactionDto,
+  CreateStandupDto,
+  UpdateStandupSettingsDto,
+} from './dto/standup.dto';
 import { StandupService } from './standup.service';
 
 @Controller('standup')
@@ -24,12 +26,17 @@ import { StandupService } from './standup.service';
 export class StandupController {
   constructor(private readonly standupService: StandupService) {}
 
-  @Post()
-  async submitStandup(@Body() body: CreateStandupDto, @Req() request: Request) {
+  private requireUserId(request: Request): string {
     const userId = request.user?.id;
     if (!userId) {
       throw new UnauthorizedException('Authentication required.');
     }
+    return userId;
+  }
+
+  @Post()
+  async submitStandup(@Body() body: CreateStandupDto, @Req() request: Request) {
+    const userId = this.requireUserId(request);
 
     const standup = await this.standupService.submitStandup({
       userId,
@@ -59,10 +66,7 @@ export class StandupController {
 
   @Get('feed')
   async getFeed(@Req() request: Request) {
-    const userId = request.user?.id;
-    if (!userId) {
-      throw new UnauthorizedException('Authentication required.');
-    }
+    const userId = this.requireUserId(request);
 
     const feed = await this.standupService.getTodayFeed(userId);
     return {
@@ -102,10 +106,7 @@ export class StandupController {
     @Body() body: CreateReactionDto,
     @Req() request: Request,
   ) {
-    const userId = request.user?.id;
-    if (!userId) {
-      throw new UnauthorizedException('Authentication required.');
-    }
+    const userId = this.requireUserId(request);
 
     await this.standupService.addReaction({
       standupId,
@@ -124,10 +125,7 @@ export class StandupController {
     @Param('emoji') emoji: string,
     @Req() request: Request,
   ) {
-    const userId = request.user?.id;
-    if (!userId) {
-      throw new UnauthorizedException('Authentication required.');
-    }
+    const userId = this.requireUserId(request);
 
     await this.standupService.removeReaction({
       standupId,

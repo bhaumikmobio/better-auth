@@ -1,5 +1,5 @@
-import { ObjectId, type Db, type Document, type MongoClient } from 'mongodb';
-import { createMongoDatabase } from '../../../database/database-provider';
+import { ObjectId, type Db, type Document } from 'mongodb';
+import { createMongoDatabase } from '../../../database/database.service';
 import {
   DEFAULT_PROMPT,
   STANDUP_SETTINGS_DOC_ID,
@@ -42,12 +42,11 @@ type MongoSettingsDoc = {
 };
 
 export class MongoDbChatbotStore implements ChatbotStore {
-  private mongoClient: MongoClient | null = null;
   private mongoDb: Db | null = null;
   private hasEnsuredChunkCollection = false;
 
   private getVectorIndexName(): string {
-    const configured = process.env.CHATBOT_VECTOR_INDEX?.trim();
+    const configured = process.env.MONGODB_VECTOR_INDEX?.trim();
     return configured && configured.length > 0
       ? configured
       : 'standup_chunks_vector_index';
@@ -75,10 +74,8 @@ export class MongoDbChatbotStore implements ChatbotStore {
     }
 
     const { database, client } = createMongoDatabase(mongodbUri);
-    const mongoClient = client as MongoClient;
-    await mongoClient.connect();
-    this.mongoClient = mongoClient;
-    this.mongoDb = database as Db;
+    await client.connect();
+    this.mongoDb = database;
     return this.mongoDb;
   }
 

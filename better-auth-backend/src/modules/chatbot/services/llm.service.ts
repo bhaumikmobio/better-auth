@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { OllamaService } from '../../../integrations/ollama/ollama.service';
+import { LlmService } from '../../../integrations/llm/llm.service';
 
 type OllamaChatResponse = {
   message?: {
@@ -9,7 +9,7 @@ type OllamaChatResponse = {
 
 @Injectable()
 export class ChatbotLlmService {
-  constructor(private readonly ollamaService: OllamaService) {}
+  constructor(private readonly llmService: LlmService) {}
 
   getChatModel(): string {
     return process.env.OLLAMA_CHAT_MODEL?.trim() || 'llama3';
@@ -18,7 +18,7 @@ export class ChatbotLlmService {
   async generate(
     messages: Array<{ role: 'system' | 'user'; content: string }>,
   ) {
-    const payload = await this.ollamaService.postJson<OllamaChatResponse>(
+    const payload = await this.llmService.postJson<OllamaChatResponse>(
       '/api/chat',
       {
         model: this.getChatModel(),

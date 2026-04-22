@@ -1,19 +1,13 @@
 import { Module } from '@nestjs/common';
-import { EmbeddingService } from '../../integrations/embeddings/embedding.service';
-import { OllamaService } from '../../integrations/ollama/ollama.service';
-import { ChatbotController } from './controllers/chatbot.controller';
-import { ChatbotEmbeddingService } from './services/embedding.service';
+import { IntegrationsModule } from '../../integrations/integrations.module';
+import { ChatbotController } from './chatbot.controller';
+import { ChatbotHelper } from './chatbot.helper';
 import { ChatbotLlmService } from './services/llm.service';
 import { ChatbotService } from './services/chatbot.service';
 
 @Module({
+  imports: [IntegrationsModule],
   controllers: [ChatbotController],
-  providers: [
-    ChatbotService,
-    ChatbotLlmService,
-    ChatbotEmbeddingService,
-    OllamaService,
-    EmbeddingService,
-  ],
+  providers: [ChatbotService, ChatbotHelper, ChatbotLlmService],
 })
 export class ChatbotModule {}

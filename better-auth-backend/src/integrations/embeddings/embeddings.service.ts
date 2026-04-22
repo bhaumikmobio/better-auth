@@ -1,20 +1,20 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { OllamaService } from '../ollama/ollama.service';
+import { LlmService } from '../llm/llm.service';
 
 type OllamaEmbeddingResponse = {
   embedding?: number[];
 };
 
 @Injectable()
-export class EmbeddingService {
-  constructor(private readonly ollamaService: OllamaService) {}
+export class EmbeddingsService {
+  constructor(private readonly llmService: LlmService) {}
 
   getEmbeddingModel(): string {
     return process.env.OLLAMA_EMBED_MODEL?.trim() || 'nomic-embed-text';
   }
 
   async createEmbedding(text: string): Promise<number[]> {
-    const payload = await this.ollamaService.postJson<OllamaEmbeddingResponse>(
+    const payload = await this.llmService.postJson<OllamaEmbeddingResponse>(
       '/api/embeddings',
       {
         model: this.getEmbeddingModel(),

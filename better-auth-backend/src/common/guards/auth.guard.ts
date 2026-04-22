@@ -7,7 +7,7 @@ import {
 import type { Request } from 'express';
 import { fromNodeHeaders } from 'better-auth/node';
 import type { AuthenticatedUser } from '../types/auth-user.type';
-import { auth } from '../../modules/auth/auth.config';
+import { auth } from '../../config/auth.config';
 
 @Injectable()
 export class AuthGuard implements CanActivate {

@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 
 @Injectable()
-export class OllamaService {
+export class LlmService {
   getBaseUrl(): string {
     const value =
       process.env.OLLAMA_BASE_URL?.trim() ?? 'http://localhost:11434';

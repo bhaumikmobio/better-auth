@@ -43,7 +43,7 @@ Configure these environment variables before starting the backend:
 - `OLLAMA_CHAT_MODEL` (default: `llama3`)
 - `OLLAMA_EMBED_MODEL` (default: `nomic-embed-text`)
 - `OLLAMA_EMBED_DIMENSIONS` (default: `768`)
-- `CHATBOT_VECTOR_INDEX` (default: `standup_chunks_vector_index`)
+- `MONGODB_VECTOR_INDEX` (default: `standup_chunks_vector_index`)
 
 Google Cloud Console must include this redirect URI:
 

@@ -8,12 +8,12 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import type { Request } from 'express';
-import { Roles } from '../../../common/decorators/roles.decorator';
-import { AuthGuard } from '../../../common/guards/auth.guard';
-import { RolesGuard } from '../../../common/guards/roles.guard';
-import type { AskChatbotDto } from '../dto/ask-chatbot.dto';
-import type { ReindexChatbotDto } from '../dto/reindex-chatbot.dto';
-import { ChatbotService } from '../services/chatbot.service';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { AuthGuard } from '../../common/guards/auth.guard';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import type { AskChatbotDto } from './dto/ask-chatbot.dto';
+import type { ReindexChatbotDto } from './dto/reindex-chatbot.dto';
+import { ChatbotService } from './services/chatbot.service';
 
 @Controller('chatbot')
 @UseGuards(AuthGuard, RolesGuard)
@@ -28,7 +28,6 @@ export class ChatbotController {
     }
 
     const result = await this.chatbotService.askQuestion({
-      userId,
       requesterName: request.user?.name ?? undefined,
       query: this.chatbotService.validateQuestion(body?.query),
       topK: this.chatbotService.validateTopK(body?.topK),

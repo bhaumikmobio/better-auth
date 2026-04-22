@@ -3,11 +3,8 @@ import { MongoClient } from 'mongodb';
 import mysql from 'mysql2/promise';
 import type { RowDataPacket } from 'mysql2/promise';
 import { Pool } from 'pg';
-import {
-  resolveDatabaseProvider,
-  type DatabaseProvider,
-} from '../src/database/database-provider';
-import { getRequiredEnv } from '../src/database/common.util';
+import type { DatabaseProvider } from '../src/config/database.config';
+import { getRequiredEnv } from '../src/common/utils/env.util';
 
 type UserRecord = {
   id?: string;
@@ -82,7 +79,7 @@ const getAdminName = (): string =>
 
 const getAuthApi = (): AuthApi => {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const authModule = require('../src/modules/auth/auth.config') as AuthModule;
+  const authModule = require('../src/config/auth.config') as AuthModule;
   return authModule.auth.api;
 };
 
@@ -301,12 +298,19 @@ const setAdminRole = async (
 };
 
 const run = async (): Promise<void> => {
-  const providerArg = process.argv[2];
+  const providerArg =
+    typeof process.argv[2] === 'string' ? process.argv[2] : undefined;
   if (providerArg) {
-    process.env.DATABASE = normalizeProvider(providerArg);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const normalizedProvider: DatabaseProvider = normalizeProvider(providerArg);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    process.env.DATABASE = normalizedProvider;
   }
 
-  const provider = resolveDatabaseProvider();
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+  const provider: DatabaseProvider = normalizeProvider(
+    process.env.DATABASE ?? 'postgres',
+  );
   const email = getAdminEmail();
 
   await createAdminUserIfMissing();

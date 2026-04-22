@@ -1,6 +1,6 @@
 import { Kysely, MysqlDialect } from 'kysely';
 import mysql from 'mysql2';
-import { getRequiredEnv } from './common.util';
+import { getRequiredEnv } from '../common/utils/env.util';
 
 let mysqlDb: Kysely<unknown> | null = null;
 
