@@ -12,3 +12,10 @@ export type CreateReactionDto = {
 export type UpdateStandupSettingsDto = {
   dailyPrompt: string;
 };
+
+export type StandupHistoryQueryDto = {
+  from?: string;
+  to?: string;
+  limit?: string;
+  offset?: string;
+};

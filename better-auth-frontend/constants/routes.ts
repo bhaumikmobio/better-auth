@@ -7,6 +7,7 @@ export const ROUTES = {
   profile: "/profile",
   dashboard: "/dashboard",
   standup: "/standup",
+  standupHistory: "/standup/history",
   admin: "/admin",
   adminOverview: "/admin/overview",
   adminUsers: "/admin/users",

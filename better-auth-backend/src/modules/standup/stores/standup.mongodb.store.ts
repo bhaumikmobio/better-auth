@@ -21,6 +21,8 @@ import type {
   SettingsResult,
   StandupCreateResult,
   StandupFeedResult,
+  StandupHistoryFilters,
+  StandupHistoryResult,
   StandupStore,
   SubmitStandupArgs,
 } from '../standup.types';
@@ -260,6 +262,111 @@ export class MongoDbStandupStore implements StandupStore {
           currentUserId,
         ),
       })),
+    };
+  }
+
+  async getHistoryFeed(
+    currentUserId: string,
+    query: StandupHistoryFilters,
+  ): Promise<StandupHistoryResult> {
+    const db = await this.getMongoDb();
+    const fromDate = new Date(query.from);
+    const toDate = new Date(query.to);
+    const [standups, total] = await Promise.all([
+      db
+        .collection<MongoStandupDoc>('standup')
+        .find({
+          createdAt: {
+            $gte: fromDate,
+            $lt: toDate,
+          },
+        })
+        .sort({ createdAt: -1 })
+        .skip(query.offset)
+        .limit(query.limit)
+        .toArray(),
+      db.collection<MongoStandupDoc>('standup').countDocuments({
+        createdAt: {
+          $gte: fromDate,
+          $lt: toDate,
+        },
+      }),
+    ]);
+
+    const standupEntries = standups
+      .map((item) => {
+        const id = this.normalizeStandupId(item._id);
+        if (!id || typeof item.userId !== 'string') {
+          return null;
+        }
+        return {
+          id,
+          userId: item.userId,
+          createdAt:
+            item.createdAt instanceof Date
+              ? item.createdAt
+              : new Date(item.createdAt),
+          yesterday: typeof item.yesterday === 'string' ? item.yesterday : '',
+          today: typeof item.today === 'string' ? item.today : '',
+          blockers: typeof item.blockers === 'string' ? item.blockers : '',
+          mood: typeof item.mood === 'string' ? item.mood : null,
+        };
+      })
+      .filter((item): item is NonNullable<typeof item> => item !== null);
+
+    const [userNameMap, reactions] = await Promise.all([
+      this.getMongoUserNameMap(standupEntries.map((item) => item.userId)),
+      standupEntries.length > 0
+        ? db
+            .collection<MongoReactionDoc>('reaction')
+            .find({
+              standupId: { $in: standupEntries.map((item) => item.id) },
+            })
+            .toArray()
+        : Promise.resolve([]),
+    ]);
+
+    const reactionsByStandupId = new Map<
+      string,
+      Array<{ emoji: string; userId: string }>
+    >();
+    for (const reaction of reactions) {
+      if (
+        typeof reaction.standupId !== 'string' ||
+        typeof reaction.emoji !== 'string' ||
+        typeof reaction.userId !== 'string'
+      ) {
+        continue;
+      }
+      const list = reactionsByStandupId.get(reaction.standupId) ?? [];
+      list.push({ emoji: reaction.emoji, userId: reaction.userId });
+      reactionsByStandupId.set(reaction.standupId, list);
+    }
+
+    return {
+      standups: standupEntries.map((standup) => ({
+        id: standup.id,
+        createdAt: standup.createdAt,
+        yesterday: standup.yesterday,
+        today: standup.today,
+        blockers: standup.blockers,
+        mood: standup.mood,
+        user: {
+          id: standup.userId,
+          name: userNameMap.get(standup.userId) ?? UNKNOWN_USER_NAME,
+        },
+        reactions: groupReactions(
+          reactionsByStandupId.get(standup.id) ?? [],
+          currentUserId,
+        ),
+      })),
+      filters: {
+        from: query.from,
+        to: query.to,
+        limit: query.limit,
+        offset: query.offset,
+        total,
+      },
     };
   }
 

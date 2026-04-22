@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
@@ -22,6 +23,7 @@ import { requireAuthenticatedUserId } from '../../common/utils/request-user.util
 import type {
   CreateReactionDto,
   CreateStandupDto,
+  StandupHistoryQueryDto,
   UpdateStandupSettingsDto,
 } from './dto/standup.dto';
 import { StandupService } from './standup.service';
@@ -68,6 +70,32 @@ export class StandupController {
 
     const feed = await this.standupService.getTodayFeed(userId);
     return messageDataResponse(STANDUP_MESSAGES.FEED_FETCHED, feed);
+  }
+
+  @Get('history')
+  async getHistory(
+    @Query() query: StandupHistoryQueryDto,
+    @Req() request: Request,
+  ) {
+    const userId = this.requireUserId(request);
+    const historyQuery = this.standupService.validateHistoryQuery({
+      from: query?.from,
+      to: query?.to,
+      limit:
+        typeof query?.limit === 'string' && query.limit.trim().length > 0
+          ? Number(query.limit)
+          : undefined,
+      offset:
+        typeof query?.offset === 'string' && query.offset.trim().length > 0
+          ? Number(query.offset)
+          : undefined,
+    });
+    const history = await this.standupService.getHistoryFeed(
+      userId,
+      historyQuery,
+    );
+
+    return messageDataResponse(STANDUP_MESSAGES.HISTORY_FETCHED, history);
   }
 
   @Get('admin/summary')

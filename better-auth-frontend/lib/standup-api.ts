@@ -29,6 +29,24 @@ type GetStandupFeedResponse = {
   };
 };
 
+export type StandupHistoryFilters = {
+  from: string;
+  to: string;
+  limit: number;
+  offset: number;
+  total: number;
+};
+
+export type StandupHistoryData = {
+  standups: StandupFeedItem[];
+  filters: StandupHistoryFilters;
+};
+
+type GetStandupHistoryResponse = {
+  message: string;
+  data: StandupHistoryData;
+};
+
 type GetStandupAdminSummaryResponse = {
   message: string;
   data: {
@@ -71,6 +89,33 @@ export async function getStandupFeed() {
   const payload = await apiRequest<GetStandupFeedResponse>('/standup/feed', {
     method: 'GET',
   });
+
+  return payload.data;
+}
+
+export async function getStandupHistory(params: {
+  from?: string;
+  to?: string;
+  limit?: number;
+  offset?: number;
+}) {
+  const searchParams = new URLSearchParams();
+  if (params.from) searchParams.set("from", params.from);
+  if (params.to) searchParams.set("to", params.to);
+  if (typeof params.limit === "number") {
+    searchParams.set("limit", String(params.limit));
+  }
+  if (typeof params.offset === "number") {
+    searchParams.set("offset", String(params.offset));
+  }
+
+  const queryString = searchParams.toString();
+  const payload = await apiRequest<GetStandupHistoryResponse>(
+    `/standup/history${queryString ? `?${queryString}` : ""}`,
+    {
+      method: "GET",
+    },
+  );
 
   return payload.data;
 }

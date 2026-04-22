@@ -6,6 +6,7 @@ export const MONGODB_URI_REQUIRED_MESSAGE =
 export const STANDUP_MESSAGES = {
   SUBMITTED: 'Stand-up submitted successfully.',
   FEED_FETCHED: 'Stand-up feed fetched successfully.',
+  HISTORY_FETCHED: 'Stand-up history fetched successfully.',
   SUMMARY_FETCHED: 'Today summary fetched successfully.',
   SETTINGS_UPDATED: 'Stand-up settings updated successfully.',
   REACTION_ADDED: 'Reaction added successfully.',

@@ -14,6 +14,8 @@ import type {
   SettingsResult,
   StandupCreateResult,
   StandupFeedResult,
+  StandupHistoryFilters,
+  StandupHistoryResult,
   SubmitStandupArgs,
   RemoveReactionArgs,
   StandupStore,
@@ -111,6 +113,72 @@ export class PostgresStandupStore implements StandupStore {
         },
         reactions: groupReactions(standup.reactions, currentUserId),
       })),
+    };
+  }
+
+  async getHistoryFeed(
+    currentUserId: string,
+    query: StandupHistoryFilters,
+  ): Promise<StandupHistoryResult> {
+    const fromDate = new Date(query.from);
+    const toDate = new Date(query.to);
+    const [standups, total] = await Promise.all([
+      this.prisma.standup.findMany({
+        where: {
+          createdAt: {
+            gte: fromDate,
+            lt: toDate,
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+        skip: query.offset,
+        take: query.limit,
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+          reactions: {
+            select: {
+              emoji: true,
+              userId: true,
+            },
+          },
+        },
+      }),
+      this.prisma.standup.count({
+        where: {
+          createdAt: {
+            gte: fromDate,
+            lt: toDate,
+          },
+        },
+      }),
+    ]);
+
+    return {
+      standups: standups.map((standup) => ({
+        id: standup.id,
+        createdAt: standup.createdAt,
+        yesterday: standup.yesterday,
+        today: standup.today,
+        blockers: standup.blockers,
+        mood: standup.mood,
+        user: {
+          id: standup.user.id,
+          name: standup.user.name,
+        },
+        reactions: groupReactions(standup.reactions, currentUserId),
+      })),
+      filters: {
+        from: query.from,
+        to: query.to,
+        limit: query.limit,
+        offset: query.offset,
+        total,
+      },
     };
   }
 
