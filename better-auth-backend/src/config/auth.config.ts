@@ -46,13 +46,34 @@ const getDatabaseAdapter = (): unknown => {
   }
 };
 
-const frontendOrigin =
-  process.env.FRONTEND_URL?.trim() ?? 'http://localhost:3000';
-const trustedOrigins = [frontendOrigin];
+const normalizeOrigin = (value: string): string => value.replace(/\/$/, '');
+
+const collectTrustedOrigins = (): string[] => {
+  const extras =
+    process.env.BETTER_AUTH_TRUSTED_ORIGINS?.split(',').map((s) => s.trim()) ??
+    [];
+  const merged = [
+    process.env.FRONTEND_URL?.trim(),
+    process.env.BETTER_AUTH_URL?.trim(),
+    ...extras,
+  ].filter(
+    (entry): entry is string => typeof entry === 'string' && entry.length > 0,
+  );
+  const normalized = merged.map(normalizeOrigin);
+  return Array.from(new Set(normalized));
+};
+
+const resolvedTrustedOrigins = collectTrustedOrigins();
+const trustedOrigins =
+  resolvedTrustedOrigins.length > 0
+    ? resolvedTrustedOrigins
+    : ['http://localhost:3000'];
+
+const betterAuthUrl = getRequiredEnv('BETTER_AUTH_URL', { trim: true });
 
 export const auth = betterAuth({
   secret: authSecret,
-  baseURL: process.env.BETTER_AUTH_URL,
+  baseURL: normalizeOrigin(betterAuthUrl),
   basePath: '/auth',
   trustedOrigins,
   database: getDatabaseAdapter() as never,
