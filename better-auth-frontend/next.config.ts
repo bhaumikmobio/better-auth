@@ -12,16 +12,8 @@ const nextConfig: NextConfig = {
         destination: `${backendOrigin}/auth/:path*`,
       },
       {
-        source: "/standup/:path*",
-        destination: `${backendOrigin}/standup/:path*`,
-      },
-      {
-        source: "/admin/:path*",
-        destination: `${backendOrigin}/admin/:path*`,
-      },
-      {
-        source: "/chatbot/:path*",
-        destination: `${backendOrigin}/chatbot/:path*`,
+        source: "/api-proxy/:path*",
+        destination: `${backendOrigin}/:path*`,
       },
     ];
   },

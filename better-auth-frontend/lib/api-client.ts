@@ -4,7 +4,8 @@ type ApiRequestOptions = Omit<RequestInit, "body"> & { json?: unknown };
 
 function toAbsoluteUrl(path: string) {
   const base = getBackendBaseUrl();
-  return `${base}${path.startsWith("/") ? path : `/${path}`}`;
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+  return `${base}/api-proxy${normalizedPath}`;
 }
 
 async function readErrorMessage(response: Response) {
