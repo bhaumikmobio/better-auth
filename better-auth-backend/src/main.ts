@@ -1,10 +1,15 @@
 import 'dotenv/config';
 import { NestFactory } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+
+  // Behind Vercel (or any reverse proxy) → Render: honor X-Forwarded-* so
+  // Better Auth sees the public URL that matches BETTER_AUTH_URL / FRONTEND_URL.
+  app.set('trust proxy', true);
 
   app.use(
     helmet({
