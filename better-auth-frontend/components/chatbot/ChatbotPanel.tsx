@@ -62,10 +62,10 @@ export function ChatbotPanel() {
       <button
         type="button"
         aria-label={isOpen ? "Hide assistant" : "Open assistant"}
-        className="fixed bottom-5 right-5 z-40 inline-flex h-12 w-12 items-center justify-center rounded-full border border-cyan-300/90 bg-gradient-to-r from-cyan-600 via-sky-700 to-blue-800 text-white shadow-[0_16px_30px_-20px_rgba(12,74,110,0.95)] transition hover:brightness-105"
+        className="fixed bottom-10 right-10 z-40 inline-flex h-14 w-14 items-center justify-center rounded-full border border-cyan-300/90 bg-gradient-to-r from-cyan-600 via-sky-700 to-blue-800 text-white shadow-[0_16px_30px_-20px_rgba(12,74,110,0.95)] transition hover:brightness-105"
         onClick={() => setIsOpen((value) => !value)}
       >
-        <Sparkles className="h-5 w-5" />
+        <Sparkles className="h-6 w-6" />
       </button>
 
       {isOpen ? (
