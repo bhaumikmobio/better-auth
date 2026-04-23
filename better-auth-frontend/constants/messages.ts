@@ -163,6 +163,7 @@ export const STANDUP_COPY = {
 export const STANDUP_HISTORY_COPY = {
   title: "Standup history",
   description: "Browse date-wise stand-up updates across previous days.",
+  loadingTable: "Loading stand-up history...",
 } as const;
 
 export const ADMIN_COPY = {

@@ -2,6 +2,8 @@
 
 import { BaseTable } from "@/components/ui/BaseTable";
 import { Button } from "@/components/ui/Button";
+import { AppLoader } from "@/components/ui/AppLoader";
+import { STANDUP_HISTORY_COPY } from "@/constants/messages";
 import type { StandupFeedItem } from "@/lib/standup-api";
 
 type StandupHistoryTableProps = {
@@ -50,6 +52,10 @@ export function StandupHistoryTable({
   onClearFilters,
 }: StandupHistoryTableProps) {
   const hasNameFilter = searchTerm.trim().length > 0;
+  const showTableLoader = isLoading && rows.length === 0;
+  const emptyMessage = hasNameFilter
+    ? "No user matches found in this date range."
+    : "No stand-up history found for this range.";
 
   return (
     <section className="space-y-4 rounded-2xl border border-slate-200/80 bg-white/85 p-4 shadow-[0_18px_35px_-30px_rgba(15,23,42,0.5)]">
@@ -100,57 +106,57 @@ export function StandupHistoryTable({
         </div>
       ) : null}
 
-      <BaseTable
-        headers={[
-          "Date",
-          "Time",
-          "Name",
-          "Yesterday",
-          "Today",
-          "Blockers",
-          "Mood",
-          "Reactions",
-        ]}
-        isEmpty={!isLoading && rows.length === 0}
-        emptyMessage={
-          isLoading
-            ? "Loading stand-up history..."
-            : hasNameFilter
-              ? "No user matches found in this date range."
-              : "No stand-up history found for this range."
-        }
-      >
-        {rows.map((item) => (
-          <tr key={item.id} className="border-t border-slate-200/80 align-top hover:bg-slate-50/70">
-            <td className="px-4 py-3 text-sm text-slate-700">
-              <div className="font-medium text-slate-800">{formatDate(item.createdAt)}</div>
-            </td>
-            <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-600">{formatTime(item.createdAt)}</td>
-            <td className="whitespace-nowrap px-4 py-3 text-sm font-medium text-slate-900">{item.user.name}</td>
-            <td className="max-w-xs px-4 py-3 text-sm text-slate-700">{item.yesterday}</td>
-            <td className="max-w-xs px-4 py-3 text-sm text-slate-700">{item.today}</td>
-            <td className="max-w-xs px-4 py-3 text-sm text-slate-700">{item.blockers}</td>
-            <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-700">{item.mood ?? "-"}</td>
-            <td className="max-w-xs px-4 py-3 text-sm text-slate-700">
-              {item.reactions.length === 0 ? (
-                <span className="text-xs text-slate-500">No reactions</span>
-              ) : (
-                <div className="flex flex-wrap gap-1.5">
-                  {item.reactions.map((reaction) => (
-                    <span
-                      key={`${item.id}-${reaction.emoji}`}
-                      className="inline-flex items-center gap-1 rounded-full border border-amber-200/80 bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700"
-                    >
-                      <span>{reaction.emoji}</span>
-                      <span>{reaction.count}</span>
-                    </span>
-                  ))}
-                </div>
-              )}
-            </td>
-          </tr>
-        ))}
-      </BaseTable>
+      {showTableLoader ? (
+        <div className="rounded-xl border border-slate-200/80 bg-white/90">
+          <AppLoader compact message={STANDUP_HISTORY_COPY.loadingTable} />
+        </div>
+      ) : (
+        <BaseTable
+          headers={[
+            "Date",
+            "Time",
+            "Name",
+            "Yesterday",
+            "Today",
+            "Blockers",
+            "Mood",
+            "Reactions",
+          ]}
+          isEmpty={!isLoading && rows.length === 0}
+          emptyMessage={emptyMessage}
+        >
+          {rows.map((item) => (
+            <tr key={item.id} className="border-t border-slate-200/80 align-top hover:bg-slate-50/70">
+              <td className="px-4 py-3 text-sm text-slate-700">
+                <div className="font-medium text-slate-800">{formatDate(item.createdAt)}</div>
+              </td>
+              <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-600">{formatTime(item.createdAt)}</td>
+              <td className="whitespace-nowrap px-4 py-3 text-sm font-medium text-slate-900">{item.user.name}</td>
+              <td className="max-w-xs px-4 py-3 text-sm text-slate-700">{item.yesterday}</td>
+              <td className="max-w-xs px-4 py-3 text-sm text-slate-700">{item.today}</td>
+              <td className="max-w-xs px-4 py-3 text-sm text-slate-700">{item.blockers}</td>
+              <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-700">{item.mood ?? "-"}</td>
+              <td className="max-w-xs px-4 py-3 text-sm text-slate-700">
+                {item.reactions.length === 0 ? (
+                  <span className="text-xs text-slate-500">No reactions</span>
+                ) : (
+                  <div className="flex flex-wrap gap-1.5">
+                    {item.reactions.map((reaction) => (
+                      <span
+                        key={`${item.id}-${reaction.emoji}`}
+                        className="inline-flex items-center gap-1 rounded-full border border-amber-200/80 bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700"
+                      >
+                        <span>{reaction.emoji}</span>
+                        <span>{reaction.count}</span>
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </td>
+            </tr>
+          ))}
+        </BaseTable>
+      )}
     </section>
   );
 }
