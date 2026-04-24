@@ -1,7 +1,7 @@
 "use client";
 
 import type { InputHTMLAttributes } from "react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { PASSWORD_POLICY } from "@/constants/messages";
 import { INPUT_CLASSNAME } from "./AuthInputField";
 
@@ -11,14 +11,27 @@ type PasswordFieldProps = Omit<InputHTMLAttributes<HTMLInputElement>, "type"> & 
 
 export function PasswordField({ label, ...inputProps }: PasswordFieldProps) {
   const [isVisible, setIsVisible] = useState(false);
-  const { className, maxLength, ...restInputProps } = inputProps;
+  const inputRef = useRef<HTMLInputElement>(null);
+  const { className, maxLength, value, ...restInputProps } = inputProps;
   const inputClassName = `${INPUT_CLASSNAME} pr-10${className ? ` ${className}` : ""}`;
+  const controlledValue = typeof value === "string" ? value : undefined;
+
+  useEffect(() => {
+    if (controlledValue === undefined || !inputRef.current) {
+      return;
+    }
+
+    if (inputRef.current.value !== controlledValue) {
+      inputRef.current.value = controlledValue;
+    }
+  }, [controlledValue]);
 
   return (
     <label className="block text-sm font-medium text-slate-700">
       {label}
       <div className="relative mt-2">
         <input
+          ref={inputRef}
           {...restInputProps}
           type={isVisible ? "text" : "password"}
           maxLength={maxLength ?? PASSWORD_POLICY.maxLength}

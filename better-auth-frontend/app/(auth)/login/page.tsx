@@ -42,6 +42,7 @@ export default function LoginPage() {
 
   const handleLogin = async () => {
     setIsEmailLoading(true);
+    let shouldResetLoading = true;
 
     try {
       const result: unknown = await authClient.signIn.email({
@@ -60,11 +61,16 @@ export default function LoginPage() {
 
       toast.success(LOGIN_COPY.toast.success);
       const role = (result as { user?: { role?: unknown } })?.user?.role;
-      router.replace(hasAdminRole(role) ? ROUTES.admin : ROUTES.dashboard);
+      const redirectTo = hasAdminRole(role) ? ROUTES.admin : ROUTES.dashboard;
+      shouldResetLoading = false;
+      router.replace(redirectTo);
+      return;
     } catch (e) {
       toast.error(unknownToMessage(e, LOGIN_COPY.toast.failure));
     } finally {
-      setIsEmailLoading(false);
+      if (shouldResetLoading) {
+        setIsEmailLoading(false);
+      }
     }
   };
 
