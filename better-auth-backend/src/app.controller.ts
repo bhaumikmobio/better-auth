@@ -2,9 +2,9 @@ import { Controller, Get } from '@nestjs/common';
 
 @Controller()
 export class AppController {
-  /** Root URL — useful for Render/up checks without affecting other routes. */
+  /** Root URL — Render (and similar) health checks expect a simple response. */
   @Get()
-  root(): { ok: true; service: string } {
-    return { ok: true, service: 'better-auth-backend' };
+  root(): boolean {
+    return true;
   }
 }
