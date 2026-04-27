@@ -1,9 +1,4 @@
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
-import { resolveDatabaseProvider } from '../../../config/database.config';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { EmbeddingsService } from '../../../integrations/embeddings/embeddings.service';
 import { STANDUP_NOT_FOUND_MESSAGE } from '../../standup/standup.shared';
 import { MongoDbChatbotStore } from '../stores/chatbot.mongodb.store';
@@ -15,6 +10,7 @@ import type {
 } from '../interfaces/chatbot.interfaces';
 import { ChatbotHelper } from '../chatbot.helper';
 import { ChatbotLlmService } from './llm.service';
+import { ChatbotValidationService } from './chatbot-validation.service';
 
 @Injectable()
 export class ChatbotService {
@@ -26,49 +22,19 @@ export class ChatbotService {
     private readonly chatbotHelper: ChatbotHelper,
     private readonly embeddingsService: EmbeddingsService,
     private readonly llmService: ChatbotLlmService,
+    private readonly validationService: ChatbotValidationService,
   ) {}
 
   validateQuestion(value: unknown): string {
-    if (typeof value !== 'string' || value.trim().length < 3) {
-      throw new BadRequestException('query must be at least 3 characters.');
-    }
-    return value.trim();
+    return this.validationService.validateQuestion(value);
   }
 
   validateTopK(value: unknown): number | undefined {
-    if (value === undefined || value === null || value === '') {
-      return undefined;
-    }
-
-    const parsed = Number(value);
-    if (!Number.isInteger(parsed) || parsed < 1 || parsed > 8) {
-      throw new BadRequestException('topK must be an integer between 1 and 8.');
-    }
-
-    return parsed;
+    return this.validationService.validateTopK(value);
   }
 
   validateReindexLimit(value: unknown): number | undefined {
-    if (value === undefined || value === null || value === '') {
-      return undefined;
-    }
-
-    const parsed = Number(value);
-    if (!Number.isInteger(parsed) || parsed < 1 || parsed > 1000) {
-      throw new BadRequestException(
-        'limit must be an integer between 1 and 1000.',
-      );
-    }
-
-    return parsed;
-  }
-
-  private assertMongoProvider(): void {
-    if (resolveDatabaseProvider() !== 'mongodb') {
-      throw new BadRequestException(
-        'Chatbot vector search is available only when DATABASE=mongodb.',
-      );
-    }
+    return this.validationService.validateReindexLimit(value);
   }
 
   private async generateAnswer(
@@ -107,7 +73,7 @@ export class ChatbotService {
   }
 
   async reindexStandups(limit?: number): Promise<ChatbotReindexResult> {
-    this.assertMongoProvider();
+    this.validationService.assertMongoProvider();
     await this.mongodbStore.ensureVectorIndex();
 
     const standups = await this.mongodbStore.listStandupsForIndexing(limit);
@@ -130,7 +96,7 @@ export class ChatbotService {
   }
 
   async reindexSingleStandup(standupId: string): Promise<{ indexed: boolean }> {
-    this.assertMongoProvider();
+    this.validationService.assertMongoProvider();
     await this.mongodbStore.ensureVectorIndex();
     const source = await this.mongodbStore.findStandupForIndexing(standupId);
     if (!source) {
@@ -141,7 +107,7 @@ export class ChatbotService {
   }
 
   async askQuestion(args: ChatbotAskArgs): Promise<ChatbotAnswerResult> {
-    this.assertMongoProvider();
+    this.validationService.assertMongoProvider();
     await this.mongodbStore.ensureVectorIndex();
     const limit = args.topK ?? this.defaultTopK;
     const [standupsForContext, dailyPrompt] = await Promise.all([

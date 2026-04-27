@@ -14,58 +14,26 @@ import type {
   StandupChunkUpsert,
   StandupIndexSource,
 } from '../interfaces/chatbot.interfaces';
-
-type MongoStandupDoc = {
-  _id: ObjectId;
-  userId?: string;
-  createdAt?: Date;
-  yesterday?: string;
-  today?: string;
-  blockers?: string;
-  mood?: string | null;
-};
-
-type MongoUserDoc = {
-  _id: ObjectId;
-  id?: string;
-  name?: string;
-};
-
-type MongoStandupChunkDoc = {
-  standupId: string;
-  userId: string;
-  createdAt: Date;
-  content: string;
-  embedding: number[];
-  updatedAt: Date;
-};
-
-type MongoSettingsDoc = {
-  _id: string;
-  dailyPrompt?: string;
-};
+import type {
+  MongoSettingsDoc,
+  MongoStandupChunkDoc,
+  MongoStandupDoc,
+  MongoUserDoc,
+} from './chatbot.mongodb.types';
+import {
+  STANDUP_CHUNKS_COLLECTION,
+  getEmbeddingDimensions,
+  getVectorIndexName,
+  isObjectId,
+  mapVectorSearchResults,
+  resolveStandupListLimit,
+  toObjectId,
+  toStandupSource,
+} from './chatbot.mongodb.utils';
 
 export class MongoDbChatbotStore implements ChatbotStore {
   private mongoDb: Db | null = null;
   private hasEnsuredChunkCollection = false;
-
-  private getVectorIndexName(): string {
-    const configured = process.env.MONGODB_VECTOR_INDEX?.trim();
-    return configured && configured.length > 0
-      ? configured
-      : 'standup_chunks_vector_index';
-  }
-
-  private getEmbeddingDimensions(): number {
-    const raw = Number.parseInt(
-      process.env.OLLAMA_EMBED_DIMENSIONS?.trim() ?? '768',
-      10,
-    );
-    if (Number.isNaN(raw) || raw < 64) {
-      return 768;
-    }
-    return raw;
-  }
 
   private async getMongoDb(): Promise<Db> {
     if (this.mongoDb) {
@@ -89,7 +57,7 @@ export class MongoDbChatbotStore implements ChatbotStore {
     }
 
     const db = await this.getMongoDb();
-    const chunksCollectionName = 'standup_chunks';
+    const chunksCollectionName = STANDUP_CHUNKS_COLLECTION;
     const existing = await db
       .listCollections({ name: chunksCollectionName }, { nameOnly: true })
       .toArray();
@@ -97,23 +65,6 @@ export class MongoDbChatbotStore implements ChatbotStore {
       await db.createCollection(chunksCollectionName);
     }
     this.hasEnsuredChunkCollection = true;
-  }
-
-  private toStandupSource(doc: MongoStandupDoc): StandupIndexSource | null {
-    if (!doc._id || typeof doc.userId !== 'string') {
-      return null;
-    }
-
-    return {
-      standupId: doc._id.toHexString(),
-      userId: doc.userId,
-      userName: UNKNOWN_USER_NAME,
-      createdAt: doc.createdAt instanceof Date ? doc.createdAt : new Date(),
-      yesterday: typeof doc.yesterday === 'string' ? doc.yesterday : '',
-      today: typeof doc.today === 'string' ? doc.today : '',
-      blockers: typeof doc.blockers === 'string' ? doc.blockers : '',
-      mood: typeof doc.mood === 'string' ? doc.mood : null,
-    };
   }
 
   private async getMongoUserNameMap(
@@ -163,12 +114,12 @@ export class MongoDbChatbotStore implements ChatbotStore {
   async ensureVectorIndex(): Promise<void> {
     const db = await this.getMongoDb();
     await this.ensureChunksCollection();
-    const indexName = this.getVectorIndexName();
-    const dimensions = this.getEmbeddingDimensions();
+    const indexName = getVectorIndexName();
+    const dimensions = getEmbeddingDimensions();
 
     try {
       await db.command({
-        createSearchIndexes: 'standup_chunks',
+        createSearchIndexes: STANDUP_CHUNKS_COLLECTION,
         indexes: [
           {
             name: indexName,
@@ -217,10 +168,7 @@ export class MongoDbChatbotStore implements ChatbotStore {
 
   async listStandupsForIndexing(limit?: number): Promise<StandupIndexSource[]> {
     const db = await this.getMongoDb();
-    const safeLimit =
-      typeof limit === 'number' && Number.isFinite(limit) && limit > 0
-        ? Math.min(Math.floor(limit), 1000)
-        : 200;
+    const safeLimit = resolveStandupListLimit(limit);
 
     const docs = await db
       .collection<MongoStandupDoc>('standup')
@@ -230,7 +178,7 @@ export class MongoDbChatbotStore implements ChatbotStore {
       .toArray();
 
     const standups = docs
-      .map((doc) => this.toStandupSource(doc))
+      .map((doc) => toStandupSource(doc))
       .filter((doc): doc is StandupIndexSource => doc !== null);
     const userNameMap = await this.getMongoUserNameMap(
       standups.map((entry) => entry.userId),
@@ -245,19 +193,19 @@ export class MongoDbChatbotStore implements ChatbotStore {
   async findStandupForIndexing(
     standupId: string,
   ): Promise<StandupIndexSource | null> {
-    if (!ObjectId.isValid(standupId)) {
+    if (!isObjectId(standupId)) {
       return null;
     }
 
     const db = await this.getMongoDb();
     const doc = await db.collection<MongoStandupDoc>('standup').findOne({
-      _id: new ObjectId(standupId),
+      _id: toObjectId(standupId),
     });
     if (!doc) {
       return null;
     }
 
-    const standup = this.toStandupSource(doc);
+    const standup = toStandupSource(doc);
     if (!standup) {
       return null;
     }
@@ -281,7 +229,7 @@ export class MongoDbChatbotStore implements ChatbotStore {
     };
 
     await db
-      .collection<MongoStandupChunkDoc>('standup_chunks')
+      .collection<MongoStandupChunkDoc>(STANDUP_CHUNKS_COLLECTION)
       .replaceOne({ standupId: payload.standupId }, doc, { upsert: true });
   }
 
@@ -291,13 +239,13 @@ export class MongoDbChatbotStore implements ChatbotStore {
   ): Promise<ChatbotSource[]> {
     const db = await this.getMongoDb();
     await this.ensureChunksCollection();
-    const indexName = this.getVectorIndexName();
+    const indexName = getVectorIndexName();
     const safeLimit = Math.max(1, Math.min(limit, 8));
 
     let results: Document[];
     try {
       results = await db
-        .collection<MongoStandupChunkDoc>('standup_chunks')
+        .collection<MongoStandupChunkDoc>(STANDUP_CHUNKS_COLLECTION)
         .aggregate<Document>([
           {
             $vectorSearch: {
@@ -333,30 +281,6 @@ export class MongoDbChatbotStore implements ChatbotStore {
       throw error;
     }
 
-    return results
-      .map((item) => {
-        if (
-          typeof item.standupId !== 'string' ||
-          typeof item.userId !== 'string' ||
-          typeof item.content !== 'string'
-        ) {
-          return null;
-        }
-        const date =
-          item.createdAt instanceof Date
-            ? item.createdAt
-            : new Date(String(item.createdAt ?? ''));
-        return {
-          standupId: item.standupId,
-          userId: item.userId,
-          createdAt: Number.isNaN(date.getTime()) ? new Date() : date,
-          content: item.content,
-          score:
-            typeof item.score === 'number' && Number.isFinite(item.score)
-              ? item.score
-              : 0,
-        } satisfies ChatbotSource;
-      })
-      .filter((item): item is ChatbotSource => item !== null);
+    return mapVectorSearchResults(results);
   }
 }
