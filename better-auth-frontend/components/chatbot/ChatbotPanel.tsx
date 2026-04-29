@@ -97,8 +97,7 @@ export function ChatbotPanel() {
             <div className="min-h-0 flex-1 space-y-4 overflow-y-auto bg-[linear-gradient(180deg,rgba(248,250,252,0.9)_0%,rgba(241,245,249,0.6)_100%)] px-5 py-4">
               {messages.length === 0 ? (
                 <div className="rounded-2xl border border-cyan-200/80 bg-cyan-50/70 px-4 py-3 text-sm text-slate-700">
-                  Try asking: &quot;What blockers were reported today?&quot; or
-                  &quot;Whose mood is focused?&quot;
+                  Try asking: &quot;Show the latest standup update for Bhaumik.&quot;
                 </div>
               ) : (
                 messages.map((message) => (
