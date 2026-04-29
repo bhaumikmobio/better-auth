@@ -6,10 +6,11 @@ import type {
   ChatbotAnswerResult,
   ChatbotAskArgs,
   ChatbotReindexResult,
+  ChatbotSource,
   StandupIndexSource,
 } from '../interfaces/chatbot.interfaces';
-import { ChatbotHelper } from '../chatbot.helper';
-import { ChatbotLlmService } from './llm.service';
+import { ChatbotChunkHelper } from '../helpers/chatbot-chunk.helper';
+import { ChatbotQueryHelper } from '../helpers/chatbot-query.helper';
 import { ChatbotValidationService } from './chatbot-validation.service';
 
 @Injectable()
@@ -17,11 +18,12 @@ export class ChatbotService {
   private readonly mongodbStore = new MongoDbChatbotStore();
   private readonly defaultBootstrapReindexLimit = 200;
   private readonly defaultTopK = 4;
+  private readonly noContextMessage = 'No matching standup context found.';
 
   constructor(
-    private readonly chatbotHelper: ChatbotHelper,
+    private readonly chunkHelper: ChatbotChunkHelper,
+    private readonly queryHelper: ChatbotQueryHelper,
     private readonly embeddingsService: EmbeddingsService,
-    private readonly llmService: ChatbotLlmService,
     private readonly validationService: ChatbotValidationService,
   ) {}
 
@@ -37,26 +39,84 @@ export class ChatbotService {
     return this.validationService.validateReindexLimit(value);
   }
 
-  private async generateAnswer(
-    query: string,
-    requesterLabel: string,
-    dailyPrompt: string,
-    sources: ChatbotAnswerResult['sources'],
-  ): Promise<string> {
-    return this.llmService.generate(
-      this.chatbotHelper.buildPromptMessages(
-        query,
-        requesterLabel,
-        dailyPrompt,
-        sources,
-      ),
+  private sanitizeAndRefreshSources(
+    sources: ChatbotSource[],
+    standups: StandupIndexSource[],
+  ): ChatbotSource[] {
+    if (sources.length === 0) {
+      return sources;
+    }
+
+    const byStandupId: Map<string, StandupIndexSource> = new Map(
+      standups.map((item): [string, StandupIndexSource] => [
+        item.standupId,
+        item,
+      ]),
     );
+    const refreshed: ChatbotSource[] = [];
+    for (const source of sources) {
+      const standup = byStandupId.get(source.standupId);
+      if (!standup) {
+        refreshed.push(this.chunkHelper.enrichSourceChunkIfPossible(source));
+        continue;
+      }
+
+      refreshed.push(
+        this.chunkHelper.enrichSourceChunkIfPossible(source, standup),
+      );
+    }
+    return refreshed;
+  }
+
+  private prepareSourcesForResponse(
+    query: string,
+    sources: ChatbotSource[],
+    standups: StandupIndexSource[],
+  ): ChatbotSource[] {
+    const sanitized = this.sanitizeAndRefreshSources(sources, standups);
+    const filtered = this.queryHelper.filterSourcesByIntent(query, sanitized);
+    return this.queryHelper.sortByQueryIntent(query, filtered);
+  }
+
+  private buildSourcesFromStandups(
+    standups: StandupIndexSource[],
+    limit: number,
+  ): ChatbotSource[] {
+    return standups.slice(0, limit).flatMap((standup) => {
+      const content = this.chunkHelper.buildStandupChunk(standup);
+      if (!content) {
+        return [];
+      }
+
+      return [
+        {
+          standupId: standup.standupId,
+          userId: standup.userId,
+          createdAt: standup.createdAt,
+          content,
+          score: 0,
+        } satisfies ChatbotSource,
+      ];
+    });
+  }
+
+  private buildAnswerResult(
+    sources: ChatbotSource[],
+    query: string,
+  ): ChatbotAnswerResult {
+    return {
+      answer:
+        sources.length > 0
+          ? this.queryHelper.buildRetrievalAnswer(sources, query)
+          : this.noContextMessage,
+      sources,
+    };
   }
 
   private async indexSingleStandup(
     source: StandupIndexSource,
   ): Promise<boolean> {
-    const chunk = this.chatbotHelper.buildStandupChunk(source);
+    const chunk = this.chunkHelper.buildStandupChunk(source);
     if (!chunk) {
       return false;
     }
@@ -109,33 +169,64 @@ export class ChatbotService {
   async askQuestion(args: ChatbotAskArgs): Promise<ChatbotAnswerResult> {
     this.validationService.assertMongoProvider();
     await this.mongodbStore.ensureVectorIndex();
-    const limit = args.topK ?? this.defaultTopK;
-    const [standupsForContext, dailyPrompt] = await Promise.all([
-      this.mongodbStore.listStandupsForIndexing(200),
-      this.mongodbStore.getStandupDailyPrompt(),
-    ]);
-    const directAnswer = this.chatbotHelper.buildDirectAnswer(
+    const defaultLimit = args.topK ?? this.defaultTopK;
+    const effectiveLimit = this.queryHelper.resolveEffectiveLimit(
       args.query,
-      standupsForContext,
-      dailyPrompt,
+      defaultLimit,
     );
-    if (directAnswer) {
+    const vectorLimit = Math.min(effectiveLimit, 8);
+    const standups = await this.mongodbStore.listStandupsForIndexing(1000);
+    const userToken = this.queryHelper.extractUserToken(args.query);
+    if (userToken && this.queryHelper.isAllHistoryUserQuery(args.query)) {
+      const standupsByUser = this.queryHelper
+        .filterStandupsByUserToken(standups, userToken)
+        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+      const sources = this.buildSourcesFromStandups(
+        standupsByUser,
+        effectiveLimit,
+      );
+      return this.buildAnswerResult(sources, args.query);
+    }
+
+    const structuredStandups = this.queryHelper.resolveStructuredStandups(
+      args.query,
+      standups,
+      effectiveLimit,
+    );
+    if (structuredStandups) {
+      const sortedStructuredStandups = [...structuredStandups].sort(
+        (a, b) => b.createdAt.getTime() - a.createdAt.getTime(),
+      );
+      const structuredSources = this.buildSourcesFromStandups(
+        sortedStructuredStandups,
+        effectiveLimit,
+      );
+      const teamCompare = this.queryHelper.buildTeamCompareAnswer(
+        sortedStructuredStandups,
+      );
+      const normalizedQuery = args.query.toLowerCase();
       return {
-        answer: directAnswer,
-        sources: this.chatbotHelper.buildFallbackSources(
-          args.query,
-          standupsForContext,
-          limit,
-        ),
+        answer:
+          teamCompare &&
+          normalizedQuery.includes('compare') &&
+          normalizedQuery.includes('yesterday') &&
+          normalizedQuery.includes('today')
+            ? teamCompare
+            : this.queryHelper.buildRetrievalAnswer(
+                structuredSources,
+                args.query,
+              ),
+        sources: structuredSources,
       };
     }
 
     const queryEmbedding = await this.embeddingsService.createEmbedding(
       args.query,
     );
+
     let sources = await this.mongodbStore.searchSimilarChunks(
       queryEmbedding,
-      limit,
+      vectorLimit,
     );
 
     if (sources.length === 0) {
@@ -145,34 +236,35 @@ export class ChatbotService {
       if (reindex.indexed > 0) {
         sources = await this.mongodbStore.searchSimilarChunks(
           queryEmbedding,
-          limit,
+          vectorLimit,
         );
       }
     }
+    sources = this.prepareSourcesForResponse(args.query, sources, standups);
 
-    if (sources.length === 0) {
-      sources = this.chatbotHelper.buildFallbackSources(
-        args.query,
-        standupsForContext,
-        limit,
+    if (sources.length === 0 && userToken) {
+      await this.reindexStandups(this.defaultBootstrapReindexLimit);
+      const expanded = await this.mongodbStore.searchSimilarChunks(
+        queryEmbedding,
+        8,
+      );
+      sources = this.prepareSourcesForResponse(args.query, expanded, standups);
+    }
+
+    if (sources.length === 0 && userToken) {
+      const standupsByUser = this.queryHelper.filterStandupsByUserToken(
+        standups,
+        userToken,
+      );
+      const sortedStandupsByUser = [...standupsByUser].sort(
+        (a, b) => b.createdAt.getTime() - a.createdAt.getTime(),
+      );
+      sources = this.buildSourcesFromStandups(
+        sortedStandupsByUser,
+        effectiveLimit,
       );
     }
 
-    const enrichedSources = this.chatbotHelper.enrichSourcesForPrompt(
-      sources,
-      standupsForContext,
-    );
-    const requesterLabel = this.chatbotHelper.resolveRequesterLabel(
-      args.requesterName,
-    );
-
-    const answer = await this.generateAnswer(
-      args.query,
-      requesterLabel,
-      dailyPrompt,
-      enrichedSources,
-    );
-
-    return { answer, sources: enrichedSources };
+    return this.buildAnswerResult(sources, args.query);
   }
 }

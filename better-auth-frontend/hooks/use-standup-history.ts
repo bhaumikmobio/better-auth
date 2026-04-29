@@ -6,23 +6,12 @@ import {
   type StandupFeedItem,
 } from "@/lib/standup-api";
 
-const DEFAULT_LIMIT = 50;
-const DEFAULT_DAYS = 7;
-
-function formatDateInput(date: Date): string {
-  const year = date.getFullYear();
-  const month = `${date.getMonth() + 1}`.padStart(2, "0");
-  const day = `${date.getDate()}`.padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
+const PAGE_SIZE = 100;
 
 function getDefaultDateRange() {
-  const to = new Date();
-  const from = new Date(to);
-  from.setDate(from.getDate() - (DEFAULT_DAYS - 1));
   return {
-    fromDate: formatDateInput(from),
-    toDate: formatDateInput(to),
+    fromDate: "",
+    toDate: "",
   };
 }
 
@@ -75,16 +64,31 @@ export function useStandupHistory(): UseStandupHistoryResult {
     async function load() {
       setIsLoading(true);
       try {
-        const data = await getStandupHistory({
-          from: fromDate,
-          to: toDate,
-          limit: DEFAULT_LIMIT,
-          offset: 0,
-        });
+        let offset = 0;
+        let total = Number.POSITIVE_INFINITY;
+        const allStandups: StandupFeedItem[] = [];
+
+        while (offset < total) {
+          const data = await getStandupHistory({
+            from: fromDate || undefined,
+            to: toDate || undefined,
+            limit: PAGE_SIZE,
+            offset,
+          });
+
+          allStandups.push(...data.standups);
+          total = data.filters.total;
+
+          if (data.standups.length === 0 || allStandups.length >= total) {
+            break;
+          }
+
+          offset += PAGE_SIZE;
+        }
 
         if (!active) return;
-        setStandups(data.standups);
-        setTotalCount(data.filters.total);
+        setStandups(allStandups);
+        setTotalCount(Number.isFinite(total) ? total : allStandups.length);
         setErrorMessage(null);
       } catch (error) {
         if (!active) return;

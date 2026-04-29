@@ -1,5 +1,4 @@
 export type ChatbotAskArgs = {
-  requesterName?: string | null;
   query: string;
   topK?: number;
 };

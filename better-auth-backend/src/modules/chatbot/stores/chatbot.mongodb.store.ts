@@ -34,6 +34,11 @@ import {
 export class MongoDbChatbotStore implements ChatbotStore {
   private mongoDb: Db | null = null;
   private hasEnsuredChunkCollection = false;
+  private readonly standupListCacheTtlMs = 15000;
+  private readonly standupListCache = new Map<
+    number,
+    { expiresAt: number; data: StandupIndexSource[] }
+  >();
 
   private async getMongoDb(): Promise<Db> {
     if (this.mongoDb) {
@@ -181,6 +186,11 @@ export class MongoDbChatbotStore implements ChatbotStore {
 
   async listStandupsForIndexing(limit?: number): Promise<StandupIndexSource[]> {
     const safeLimit = resolveStandupListLimit(limit);
+    const cached = this.standupListCache.get(safeLimit);
+    const now = Date.now();
+    if (cached && cached.expiresAt > now) {
+      return cached.data;
+    }
 
     const docs = await this.withDb(async (db) =>
       db
@@ -198,10 +208,15 @@ export class MongoDbChatbotStore implements ChatbotStore {
       standups.map((entry) => entry.userId),
     );
 
-    return standups.map((entry) => ({
+    const resolved = standups.map((entry) => ({
       ...entry,
       userName: userNameMap.get(entry.userId) ?? UNKNOWN_USER_NAME,
     }));
+    this.standupListCache.set(safeLimit, {
+      expiresAt: now + this.standupListCacheTtlMs,
+      data: resolved,
+    });
+    return resolved;
   }
 
   async findStandupForIndexing(
@@ -247,6 +262,7 @@ export class MongoDbChatbotStore implements ChatbotStore {
         .collection<MongoStandupChunkDoc>(STANDUP_CHUNKS_COLLECTION)
         .replaceOne({ standupId: payload.standupId }, doc, { upsert: true });
     });
+    this.standupListCache.clear();
   }
 
   async searchSimilarChunks(

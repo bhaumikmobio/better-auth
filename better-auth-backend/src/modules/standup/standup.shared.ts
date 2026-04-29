@@ -8,7 +8,7 @@ export const STANDUP_REACTION_NOT_FOUND_MESSAGE =
 export const STANDUP_HISTORY_DEFAULT_LIMIT = 50;
 export const STANDUP_HISTORY_MAX_LIMIT = 100;
 export const STANDUP_HISTORY_DEFAULT_OFFSET = 0;
-export const STANDUP_HISTORY_DEFAULT_DAYS = 7;
+export const STANDUP_HISTORY_DEFAULT_DAYS = 36500;
 
 export const toTodayRange = (): DateRange => {
   const start = new Date();

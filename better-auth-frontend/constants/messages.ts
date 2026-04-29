@@ -1,5 +1,5 @@
 export const APP_COPY = {
-  appTitle: "Better Auth Demo",
+  appTitle: "Daily Standup",
 } as const;
 
 export const LOADER_COPY = {

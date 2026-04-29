@@ -20,7 +20,6 @@ export class ChatbotController {
     requireAuthenticatedUserId(request);
 
     const result = await this.chatbotService.askQuestion({
-      requesterName: request.user?.name ?? undefined,
       query: this.chatbotService.validateQuestion(body?.query),
       topK: this.chatbotService.validateTopK(body?.topK),
     });
