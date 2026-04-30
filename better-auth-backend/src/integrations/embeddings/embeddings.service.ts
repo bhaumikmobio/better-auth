@@ -1,37 +1,62 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { LlmService } from '../llm/llm.service';
-
-type OllamaEmbeddingResponse = {
-  embedding?: number[];
-};
+import { pipeline } from '@xenova/transformers';
+import type { FeatureExtractionPipeline } from '@xenova/transformers';
+import {
+  getChatbotEmbeddingModelId,
+  getEmbeddingDimensions,
+} from '../../config/embedding.config';
 
 @Injectable()
 export class EmbeddingsService {
-  constructor(private readonly llmService: LlmService) {}
+  private extractorPromise: Promise<FeatureExtractionPipeline> | null = null;
 
-  getEmbeddingModel(): string {
-    return process.env.OLLAMA_EMBED_MODEL?.trim() || 'nomic-embed-text';
+  getEmbeddingModelId(): string {
+    return getChatbotEmbeddingModelId();
+  }
+
+  private async getExtractor(): Promise<FeatureExtractionPipeline> {
+    if (!this.extractorPromise) {
+      const modelId = getChatbotEmbeddingModelId();
+      this.extractorPromise = pipeline(
+        'feature-extraction',
+        modelId,
+      ) as Promise<FeatureExtractionPipeline>;
+    }
+    return this.extractorPromise;
+  }
+
+  private tensorToVector(output: unknown): number[] {
+    if (output && typeof output === 'object' && 'data' in output) {
+      const data = (output as { data: Float32Array | Float64Array }).data;
+      if (data && data.length > 0) {
+        return Array.from(data);
+      }
+    }
+    throw new BadRequestException(
+      'Embedding model returned an empty or invalid tensor.',
+    );
   }
 
   async createEmbedding(text: string): Promise<number[]> {
-    const payload = await this.llmService.postJson<OllamaEmbeddingResponse>(
-      '/api/embeddings',
-      {
-        model: this.getEmbeddingModel(),
-        prompt: text,
-      },
-    );
+    const trimmed = text.trim();
+    if (!trimmed) {
+      throw new BadRequestException('Embedding input cannot be empty.');
+    }
 
-    if (
-      !Array.isArray(payload.embedding) ||
-      payload.embedding.length === 0 ||
-      !payload.embedding.every((value) => typeof value === 'number')
-    ) {
+    const extractor = await this.getExtractor();
+    const raw = await extractor(trimmed, {
+      pooling: 'mean',
+      normalize: true,
+    });
+
+    const vector = this.tensorToVector(raw);
+    const expected = getEmbeddingDimensions();
+    if (vector.length !== expected) {
       throw new BadRequestException(
-        'Ollama embedding response is missing a valid embedding vector.',
+        `Embedding length ${vector.length} does not match configured dimensions (${expected}). Set CHATBOT_EMBEDDING_DIMENSIONS to the model output size, or pick a model that matches your vector index.`,
       );
     }
 
-    return payload.embedding;
+    return vector;
   }
 }

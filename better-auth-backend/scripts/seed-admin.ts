@@ -1,4 +1,4 @@
-import 'dotenv/config';
+import '../src/config/load-env';
 import { MongoClient } from 'mongodb';
 import mysql from 'mysql2/promise';
 import type { RowDataPacket } from 'mysql2/promise';

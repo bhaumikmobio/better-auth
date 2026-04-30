@@ -1,14 +1,16 @@
 import { ObjectId, type Document } from 'mongodb';
 import { UNKNOWN_USER_NAME } from '../../../common/constants/app.constants';
+import { getEmbeddingDimensions } from '../../../config/embedding.config';
 import type {
   ChatbotSource,
   StandupIndexSource,
 } from '../interfaces/chatbot.interfaces';
 import type { MongoStandupDoc } from './chatbot.mongodb.types';
 
+export { getEmbeddingDimensions };
+
 export const STANDUP_CHUNKS_COLLECTION = 'standup_chunks';
 export const DEFAULT_VECTOR_INDEX_NAME = 'standup_chunks_vector_index';
-export const DEFAULT_EMBEDDING_DIMENSIONS = 768;
 export const MAX_STANDUP_INDEX_LIMIT = 1000;
 export const DEFAULT_STANDUP_LIST_LIMIT = 200;
 
@@ -17,18 +19,6 @@ export function getVectorIndexName(): string {
   return configured && configured.length > 0
     ? configured
     : DEFAULT_VECTOR_INDEX_NAME;
-}
-
-export function getEmbeddingDimensions(): number {
-  const raw = Number.parseInt(
-    process.env.OLLAMA_EMBED_DIMENSIONS?.trim() ??
-      String(DEFAULT_EMBEDDING_DIMENSIONS),
-    10,
-  );
-  if (Number.isNaN(raw) || raw < 64) {
-    return DEFAULT_EMBEDDING_DIMENSIONS;
-  }
-  return raw;
 }
 
 export function resolveStandupListLimit(limit?: number): number {

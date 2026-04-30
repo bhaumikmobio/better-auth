@@ -39,10 +39,8 @@ Configure these environment variables before starting the backend:
 - `FRONTEND_URL` (example: `http://localhost:3000`)
 - `GOOGLE_CLIENT_ID`
 - `GOOGLE_CLIENT_SECRET`
-- `OLLAMA_BASE_URL` (default: `http://localhost:11434`)
-- `OLLAMA_CHAT_MODEL` (default: `llama3`)
-- `OLLAMA_EMBED_MODEL` (default: `nomic-embed-text`)
-- `OLLAMA_EMBED_DIMENSIONS` (default: `768`)
+- `CHATBOT_EMBED_MODEL` (required for chatbot — Hugging Face model id for Transformers.js, e.g. `Xenova/all-mpnet-base-v2`)
+- `CHATBOT_EMBEDDING_DIMENSIONS` (required for chatbot — must match `CHATBOT_EMBED_MODEL` output and Atlas vector index `numDimensions`, e.g. `768` for the example model)
 - `MONGODB_VECTOR_INDEX` (default: `standup_chunks_vector_index`)
 
 Google Cloud Console must include this redirect URI:
@@ -55,12 +53,10 @@ Example for local development:
 
 ## MongoDB vector chatbot setup
 
-This project includes a protected chatbot endpoint that performs RAG over standup entries using MongoDB Atlas Vector Search and Ollama.
+This project includes a protected chatbot endpoint that performs RAG over standup entries using MongoDB Atlas Vector Search and local ONNX embeddings via [Transformers.js](https://github.com/xenova/transformers.js).
 
-1. Ensure `DATABASE=mongodb` and point `MONGODB_URI` to an Atlas cluster that supports Vector Search.
-2. Pull Ollama models locally:
-   - `ollama pull llama3`
-   - `ollama pull nomic-embed-text`
+1. Ensure `DATABASE=mongodb` and point `MONGODB_URI` to an Atlas cluster that supports Vector Search. Set `CHATBOT_EMBED_MODEL` and `CHATBOT_EMBEDDING_DIMENSIONS` in your environment (no in-app defaults).
+2. On first `/chatbot` request or reindex, the embedding model downloads (see `CHATBOT_EMBED_MODEL`). Ensure outbound HTTPS is allowed. If you change the model or `CHATBOT_EMBEDDING_DIMENSIONS`, update the Atlas vector index `numDimensions` and run a full reindex.
 3. Trigger initial indexing from an admin session:
    - `POST /chatbot/admin/reindex`
 4. Ask questions from authenticated clients:
