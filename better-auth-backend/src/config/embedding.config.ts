@@ -1,5 +1,3 @@
-import { BadRequestException } from '@nestjs/common';
-
 /**
  * Chatbot embedding settings — no application defaults; set both in `.env`
  * when using MongoDB Atlas vector search / the chatbot (see `env.example`).
@@ -7,28 +5,23 @@ import { BadRequestException } from '@nestjs/common';
 const ENV_MODEL = 'CHATBOT_EMBED_MODEL';
 const ENV_DIMS = 'CHATBOT_EMBEDDING_DIMENSIONS';
 
-export function getChatbotEmbeddingModelId(): string {
-  const v = process.env.CHATBOT_EMBED_MODEL?.trim();
-  if (!v) {
-    throw new BadRequestException(
-      `${ENV_MODEL} is required for chatbot embeddings (Transformers.js model id). See env.example.`,
-    );
+function requireNonEmptyEnv(name: string): string {
+  const value = process.env[name]?.trim();
+  if (!value) {
+    throw new Error(`${name} is required. See env.example.`);
   }
-  return v;
+  return value;
+}
+
+export function getChatbotEmbeddingModelId(): string {
+  return requireNonEmptyEnv(ENV_MODEL);
 }
 
 export function getEmbeddingDimensions(): number {
-  const raw = process.env.CHATBOT_EMBEDDING_DIMENSIONS?.trim();
-  if (!raw) {
-    throw new BadRequestException(
-      `${ENV_DIMS} is required and must match your embedding model output and Atlas vector index numDimensions. See env.example.`,
-    );
-  }
+  const raw = requireNonEmptyEnv(ENV_DIMS);
   const n = Number.parseInt(raw, 10);
   if (!Number.isFinite(n) || n <= 0) {
-    throw new BadRequestException(
-      `${ENV_DIMS} must be a positive integer (got "${raw}").`,
-    );
+    throw new Error(`${ENV_DIMS} must be a positive integer (got "${raw}").`);
   }
   return n;
 }
